@@ -337,26 +337,26 @@ class SelectionWidgetState<T> extends State<SelectionWidget<T>> {
 
         //don't filter data , they are already filtered online and local data are already filtered
         if (widget.popupProps.isFilterOnline == true)
-          _addDataToStream(_cachedItems);
+          addDataToStream(_cachedItems);
         else
-          _addDataToStream(applyFilter(filter));
+          addDataToStream(applyFilter(filter));
       } catch (e) {
         _addErrorToStream(e);
         //if offline items count > 0 , the error will be not visible for the user
         //As solution we show it in dialog
         if (widget.items.isNotEmpty) {
           _showErrorDialog(e);
-          _addDataToStream(applyFilter(filter));
+          addDataToStream(applyFilter(filter));
         }
       }
     } else {
-      _addDataToStream(applyFilter(filter));
+      addDataToStream(applyFilter(filter));
     }
 
     _loadingNotifier.value = false;
   }
 
-  void _addDataToStream(List<T> data) {
+  void addDataToStream(List<T> data) {
     if (_itemsStream.isClosed) return;
     _itemsStream.add(data);
 

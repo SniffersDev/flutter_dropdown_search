@@ -269,6 +269,12 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
       });
     }
 
+    if(!listEquals(oldWidget.items, widget.items)) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        _popupStateKey.currentState?.addDataToStream(widget.items);
+      });
+    }
+
     super.didUpdateWidget(oldWidget);
   }
 

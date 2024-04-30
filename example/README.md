@@ -38,7 +38,6 @@
 * Easy customizable UI
 * Handle Light and Dark theme
 * Easy implementation into statelessWidget
-* Support multi level items
 
 <table>
     <tr>
@@ -74,29 +73,29 @@ import 'package:dropdown_search/dropdown_search.dart';
 
 ```dart
 DropdownSearch<String>(
-    popupProps: PopupProps.menu(
-        showSelectedItems: true,
-        disabledItemFn: (String s) => s.startsWith('I'),
-    ),
-    items: ["Brazil", "Italia (Disabled)", "Tunisia", 'Canada'],
-    dropdownDecoratorProps: DropDownDecoratorProps(
-        dropdownSearchDecoration: InputDecoration(
-            labelText: "Menu mode",
-            hintText: "country in menu mode",
-        ),
-    ),
-    onChanged: print,
-    selectedItem: "Brazil",
+popupProps: PopupProps.menu(
+showSelectedItems: true,
+disabledItemFn: (String s) => s.startsWith('I'),
+),
+items: ["Brazil", "Italia (Disabled)", "Tunisia", 'Canada'],
+dropdownDecoratorProps: DropDownDecoratorProps(
+dropdownSearchDecoration: InputDecoration(
+labelText: "Menu mode",
+hintText: "country in menu mode",
+),
+),
+onChanged: print,
+selectedItem: "Brazil",
 )
 
 DropdownSearch<String>.multiSelection(
-    items: ["Brazil", "Italia (Disabled)", "Tunisia", 'Canada'],
-    popupProps: PopupPropsMultiSelection.menu(
-        showSelectedItems: true,
-        disabledItemFn: (String s) => s.startsWith('I'),
-    ),
-    onChanged: print,
-    selectedItems: ["Brazil"],
+items: ["Brazil", "Italia (Disabled)", "Tunisia", 'Canada'],
+popupProps: PopupPropsMultiSelection.menu(
+showSelectedItems: true,
+disabledItemFn: (String s) => s.startsWith('I'),
+),
+onChanged: print,
+selectedItems: ["Brazil"],
 )
 ```
 
@@ -206,7 +205,7 @@ class UserModel {
     return UserModel(
       id: json["id"],
       createdAt:
-          json["createdAt"] == null ? null : DateTime.parse(json["createdAt"]),
+      json["createdAt"] == null ? null : DateTime.parse(json["createdAt"]),
       name: json["name"],
       avatar: json["avatar"],
     );

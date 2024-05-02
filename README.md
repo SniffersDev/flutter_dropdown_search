@@ -3,6 +3,11 @@
   <br>
 </h1>
 
+<h2 align="center">
+  Fork of <a href="https://github.com/salim-lachdhaf/searchable_dropdown" target="_blank">dropdown_search</a>  plugin to solve the problem of data not being updated when the popup is already open, useful e.g. to implement infinite scroll
+  <br>
+</h2>
+
 <h4 align="center">
   <a href="https://flutter.io" target="_blank">Flutter</a> simple and robust DropdownSearch with item search feature, making it possible to use an offline item list or filtering URL for easy customization.
 </h4>

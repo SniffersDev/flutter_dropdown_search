@@ -300,6 +300,8 @@ class SelectionWidgetState<T> extends State<SelectionWidget<T>> {
     _loadingNotifier.value = true;
 
     List<T> applyFilter(String filter) {
+      if(filter.isEmpty) return _cachedItems;
+
       return _cachedItems.where((i) {
         if (widget.filterFn != null)
           return (widget.filterFn!(i, filter));
@@ -359,6 +361,12 @@ class SelectionWidgetState<T> extends State<SelectionWidget<T>> {
   void addDataToStream(List<T> data) {
     if (_itemsStream.isClosed) return;
     _itemsStream.add(data);
+
+    for(final item in data) {
+      if(!_cachedItems.contains(item)) {
+        _cachedItems.add(item);
+      }
+    }
 
     //update showed data list
     _currentShowedItems.clear();

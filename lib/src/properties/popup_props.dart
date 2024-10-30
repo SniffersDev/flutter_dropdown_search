@@ -7,6 +7,7 @@ class PopupProps<T> {
   final Widget? title;
 
   ///the search box will be shown if true, hidden otherwise
+  @Deprecated('Use isInlineSearchBar property instead.')
   final bool showSearchBox;
 
   final DropdownSearchPopupItemBuilder<T>? itemBuilder;

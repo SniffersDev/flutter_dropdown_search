@@ -17,10 +17,12 @@ class SelectionWidget<T> extends StatefulWidget {
   final List<T> defaultSelectedItems;
   final PopupPropsMultiSelection<T> popupProps;
   final bool isMultiSelectionMode;
+  final TextEditingController textEditingController;
 
   const SelectionWidget({
     Key? key,
     required this.popupProps,
+    required this.textEditingController,
     this.defaultSelectedItems = const [],
     this.isMultiSelectionMode = false,
     this.items = const [],
@@ -59,7 +61,7 @@ class SelectionWidgetState<T> extends State<SelectionWidget<T>> {
     super.initState();
     _selectedItemsNotifier.value = widget.defaultSelectedItems;
 
-    searchBoxController = widget.popupProps.searchFieldProps.controller ?? TextEditingController();
+    searchBoxController = widget.textEditingController;
     searchBoxController.addListener(searchBoxControllerListener);
 
     Future.delayed(

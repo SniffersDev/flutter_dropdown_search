@@ -162,6 +162,13 @@ class DropdownSearch<T> extends StatefulWidget {
   ///if the callBack return FALSE, the opening of the popup will be cancelled
   final BeforePopupOpeningMultiSelection<T>? onBeforePopupOpeningMultiSelection;
 
+  /// A method to integrate a search bar directly into the dropdown selection area.
+  /// Here, the search bar and the dropdown trigger will be combined.
+  /// default value is `false`, for not this will work only for single selction
+  /// Previously, a live search text field was added using `PopupProps.menu(showSearchBox: true)`.
+  /// `PopupProps.menu(showSearchBox: true)`. this method is deprecated
+  final bool isInlineSearchBar;
+
   DropdownSearch({
     Key? key,
     this.onSaved,
@@ -181,6 +188,7 @@ class DropdownSearch<T> extends StatefulWidget {
     this.compareFn,
     this.onBeforeChange,
     this.onBeforePopupOpening,
+    this.isInlineSearchBar = false,
     PopupProps<T> popupProps = const PopupProps.menu(),
   })  : assert(
           !popupProps.showSelectedItems || T == String || compareFn != null,
@@ -210,6 +218,7 @@ class DropdownSearch<T> extends StatefulWidget {
     this.compareFn,
     this.selectedItems = const [],
     this.popupProps = const PopupPropsMultiSelection.menu(),
+    this.isInlineSearchBar = false,
     FormFieldSetter<List<T>>? onSaved,
     ValueChanged<List<T>>? onChanged,
     BeforeChangeMultiSelection<T>? onBeforeChange,
@@ -243,6 +252,12 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
   final ValueNotifier<List<T>> _selectedItemsNotifier = ValueNotifier([]);
   final ValueNotifier<bool> _isFocused = ValueNotifier(false);
   final _popupStateKey = GlobalKey<SelectionWidgetState<T>>();
+  final FocusNode _textFieldFocusNode = FocusNode();
+  final TextEditingController _textEditingController = TextEditingController();
+
+  /// This feature may be deprecated soon, as we plan to use only [_textEditingController]
+  /// in conjunction with `PopupProps.menu(showSearchBox: true)`.
+  TextEditingController? _searchTextEditingController;
 
   @override
   void initState() {
@@ -386,6 +401,18 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
         return ValueListenableBuilder<bool>(
             valueListenable: _isFocused,
             builder: (context, isFocused, w) {
+              if (widget.isInlineSearchBar) {
+                return TextFormField(
+                  focusNode: _textFieldFocusNode,
+                  controller: _textEditingController,
+                  decoration: _manageDropdownDecoration(state),
+                  readOnly: false,
+                  onTap: _selectSearchMode,
+                  onChanged: (value) {
+                    _searchTextEditingController?.text = value;
+                  },
+                );
+              }
               return InputDecorator(
                 baseStyle: widget.dropdownDecoratorProps.baseStyle,
                 textAlign: widget.dropdownDecoratorProps.textAlign,
@@ -606,13 +633,20 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
   }
 
   ///openMenu
-  Future _openMenu() {
+  Future _openMenu() async {
     // Here we get the render object of our physical button, later to get its size & position
     final popupButtonObject = context.findRenderObject() as RenderBox;
     // Get the render object of the overlay used in `Navigator` / `MaterialApp`, i.e. screen size reference
     var overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
 
-    return showCustomMenu<T>(
+    if (widget.isInlineSearchBar) {
+      // After opening the menu, the focus changes. We need to refocus on our text field.
+      Future.delayed(Duration(milliseconds: 200), () {
+        FocusScope.of(context).requestFocus(_textFieldFocusNode);
+      });
+    }
+
+    await showCustomMenu<T>(
       menuModeProps: widget.popupProps.menuProps,
       context: context,
       position: (widget.popupProps.menuProps.positionCallback ?? _position)(
@@ -624,8 +658,12 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
   }
 
   Widget _popupWidgetInstance() {
+    final textEditingContoller = widget.popupProps.searchFieldProps.controller ?? TextEditingController();
+    _searchTextEditingController = textEditingContoller;
+
     return SelectionWidget<T>(
       key: _popupStateKey,
+      textEditingController: textEditingContoller,
       popupProps: widget.popupProps,
       itemAsString: widget.itemAsString,
       filterFn: widget.filterFn,
@@ -672,6 +710,12 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
     } else {
       changeItem();
     }
+
+    _textEditingController.text = _selectedItemAsString(getSelectedItem);
+    _textEditingController.selection = TextSelection(
+      baseOffset: 0,
+      extentOffset: _textEditingController.text.length,
+    );
 
     _handleFocus(false);
   }

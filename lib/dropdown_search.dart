@@ -659,8 +659,10 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
 
   Widget _popupWidgetInstance() {
     final textEditingContoller = widget.popupProps.searchFieldProps.controller ?? TextEditingController();
-    _searchTextEditingController = textEditingContoller;
-
+    if (widget.isInlineSearchBar) {
+      textEditingContoller.text = _textEditingController.text;
+      _searchTextEditingController = textEditingContoller;
+    }
     return SelectionWidget<T>(
       key: _popupStateKey,
       textEditingController: textEditingContoller,

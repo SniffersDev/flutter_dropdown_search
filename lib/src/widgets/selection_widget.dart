@@ -307,11 +307,11 @@ class SelectionWidgetState<T> extends State<SelectionWidget<T>> {
       return _cachedItems.where((i) {
         if (widget.filterFn != null)
           return (widget.filterFn!(i, filter));
-        else if (i.toString().toLowerCase().contains(filter.toLowerCase()))
-          return true;
         else if (widget.itemAsString != null) {
           return (widget.itemAsString!(i)).toLowerCase().contains(filter.toLowerCase());
         }
+        else if (i.toString().toLowerCase().contains(filter.toLowerCase()))
+          return true;
         return false;
       }).toList();
     }

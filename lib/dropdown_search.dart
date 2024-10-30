@@ -445,6 +445,19 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
         return ValueListenableBuilder<bool>(
             valueListenable: _isFocused,
             builder: (context, isFocused, w) {
+              if (widget.isInlineSearchBar) {
+                return TextFormField(
+                  focusNode: _textFieldFocusNode,
+                  controller: _textEditingController,
+                  decoration: _manageDropdownDecoration(state),
+                  readOnly: false,
+                  onTap: _selectSearchMode,
+                  onChanged: (value) {
+                    _searchTextEditingController?.text = value;
+                  },
+                );
+              }
+
               return InputDecorator(
                 baseStyle: widget.dropdownDecoratorProps.baseStyle,
                 textAlign: widget.dropdownDecoratorProps.textAlign,

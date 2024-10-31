@@ -8,6 +8,7 @@ class IconButtonProps {
   final AlignmentGeometry alignment;
   final double? splashRadius;
   final Widget icon;
+  final Widget activeIcon;
   final Color? focusColor;
   final Color? hoverColor;
   final Color? color;
@@ -28,6 +29,7 @@ class IconButtonProps {
 
   const IconButtonProps({
     required this.icon,
+    required this.activeIcon,
     this.isVisible = false,
     this.iconSize = 24.0,
     this.visualDensity,

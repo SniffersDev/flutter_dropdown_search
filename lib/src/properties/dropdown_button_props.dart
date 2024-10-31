@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 class DropdownButtonProps extends IconButtonProps {
   const DropdownButtonProps({
     super.icon = const Icon(Icons.arrow_drop_down, size: 24),
+    super.activeIcon = const Icon(Icons.arrow_drop_up, size: 24),
     super.isVisible = true,
     super.iconSize = 24.0,
     super.visualDensity,

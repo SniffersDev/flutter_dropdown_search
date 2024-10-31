@@ -254,6 +254,7 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
   final _popupStateKey = GlobalKey<SelectionWidgetState<T>>();
   final FocusNode _textFieldFocusNode = FocusNode();
   final TextEditingController _textEditingController = TextEditingController();
+  var _isDialogPresented = false;
 
   /// This feature may be deprecated soon, as we plan to use only [_textEditingController]
   /// in conjunction with `PopupProps.menu(showSearchBox: true)`.
@@ -538,7 +539,7 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
             isSelected: widget.dropdownButtonProps.isSelected,
             selectedIcon: widget.dropdownButtonProps.selectedIcon,
             onPressed: widget.dropdownButtonProps.onPressed ?? dropdownButtonPressed,
-            icon: widget.dropdownButtonProps.icon,
+            icon: _isDialogPresented ? widget.dropdownButtonProps.activeIcon : widget.dropdownButtonProps.icon,
             constraints: widget.dropdownButtonProps.constraints,
             hoverColor: widget.dropdownButtonProps.hoverColor,
             highlightColor: widget.dropdownButtonProps.highlightColor,
@@ -758,15 +759,26 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
     }
 
     _handleFocus(true);
-    if (widget.popupProps.mode == Mode.MENU) {
-      await _openMenu();
-    } else if (widget.popupProps.mode == Mode.MODAL_BOTTOM_SHEET) {
-      await _openModalBottomSheet();
-    } else if (widget.popupProps.mode == Mode.BOTTOM_SHEET) {
-      await _openBottomSheet();
-    } else {
-      await _openSelectDialog();
+
+    _isDialogPresented = true;
+
+    try {
+      if (widget.popupProps.mode == Mode.MENU) {
+        await _openMenu();
+      } else if (widget.popupProps.mode == Mode.MODAL_BOTTOM_SHEET) {
+        await _openModalBottomSheet();
+      } else if (widget.popupProps.mode == Mode.BOTTOM_SHEET) {
+        await _openBottomSheet();
+      } else {
+        await _openSelectDialog();
+      }
+    } catch (e, stackTrace) {
+      print("Error: $e"); 
+      print("Stack Trace: $stackTrace"); 
     }
+
+    _isDialogPresented = false;
+
     //dismiss either by selecting items OR clicking outside the popup
     widget.popupProps.onDismissed?.call();
     _handleFocus(false);

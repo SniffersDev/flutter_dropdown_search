@@ -263,6 +263,9 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
   @override
   void initState() {
     super.initState();
+
+    _textEditingController.text = _selectedItemAsString(widget.selectedItem);
+
     _selectedItemsNotifier.value =
         isMultiSelectionMode ? List.from(widget.selectedItems) : _itemToList(widget.selectedItem);
   }

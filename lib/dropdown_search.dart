@@ -668,6 +668,8 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
       ),
       child: _popupWidgetInstance(),
     );
+
+    _textEditingController.text = _selectedItemAsString(getSelectedItem);
   }
 
   Widget _popupWidgetInstance() {

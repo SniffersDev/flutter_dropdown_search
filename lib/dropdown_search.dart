@@ -276,6 +276,10 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
 
     List<T> newSelectedItems = isMultiSelectionMode ? widget.selectedItems : _itemToList(widget.selectedItem);
 
+    if (widget.selectedItem != oldWidget.selectedItem){
+      _textEditingController.text = _selectedItemAsString(widget.selectedItem);
+    }
+
     if (!listEquals(oldSelectedItems, newSelectedItems)) {
       _selectedItemsNotifier.value = List.from(newSelectedItems);
     }

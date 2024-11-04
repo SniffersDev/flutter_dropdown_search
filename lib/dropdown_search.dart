@@ -394,15 +394,16 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
     return KeyboardListener(
         focusNode: FocusNode(),
         onKeyEvent: (KeyEvent event) {
-            // Ensure only key down events are processed
-            if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
-              keyboardStateController.add(KeyboardState.up);
-            } else if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
-              keyboardStateController.add(KeyboardState.down);
-            } else if (event.logicalKey == LogicalKeyboardKey.enter) {
-              keyboardStateController.add(KeyboardState.enter);
-            } else {
-            print('Not handled event: ${event.logicalKey}');
+          if (event is KeyUpEvent) {
+              if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+                keyboardStateController.add(KeyboardState.up);
+              } else if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+                keyboardStateController.add(KeyboardState.down);
+              } else if (event.logicalKey == LogicalKeyboardKey.enter) {
+                keyboardStateController.add(KeyboardState.enter);
+              } else {
+              print('Not handled event: ${event.logicalKey}');
+            }
           }
         },
         child: isMultiSelectionMode ? _formFieldMultiSelection() : _formFieldSingleSelection());

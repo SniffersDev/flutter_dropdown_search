@@ -6,6 +6,7 @@ import 'package:dropdown_search/src/properties/clear_button_props.dart';
 import 'package:dropdown_search/src/properties/dropdown_button_props.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'src/properties/dropdown_decorator_props.dart';
 import 'src/properties/popup_props.dart';
@@ -260,6 +261,8 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
   /// in conjunction with `PopupProps.menu(showSearchBox: true)`.
   TextEditingController? _searchTextEditingController;
 
+  final StreamController<KeyboardState> keyboardStateController = StreamController<KeyboardState>.broadcast();
+
   @override
   void initState() {
     super.initState();
@@ -388,7 +391,21 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
   }
 
   Widget _formField() {
-    return isMultiSelectionMode ? _formFieldMultiSelection() : _formFieldSingleSelection();
+    return KeyboardListener(
+        focusNode: FocusNode(),
+        onKeyEvent: (KeyEvent event) {
+            // Ensure only key down events are processed
+            if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+              keyboardStateController.add(KeyboardState.up);
+            } else if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+              keyboardStateController.add(KeyboardState.down);
+            } else if (event.logicalKey == LogicalKeyboardKey.enter) {
+              keyboardStateController.add(KeyboardState.enter);
+            } else {
+            print('Not handled event: ${event.logicalKey}');
+          }
+        },
+        child: isMultiSelectionMode ? _formFieldMultiSelection() : _formFieldSingleSelection());
   }
 
   Widget _formFieldSingleSelection() {
@@ -688,6 +705,7 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
     }
     return SelectionWidget<T>(
       key: _popupStateKey,
+      keyboardStateController: keyboardStateController,
       textEditingController: textEditingContoller,
       popupProps: widget.popupProps,
       itemAsString: widget.itemAsString,

@@ -18,11 +18,13 @@ class SelectionWidget<T> extends StatefulWidget {
   final PopupPropsMultiSelection<T> popupProps;
   final bool isMultiSelectionMode;
   final TextEditingController textEditingController;
+  final StreamController<KeyboardState> keyboardStateController;
 
   const SelectionWidget({
     Key? key,
     required this.popupProps,
     required this.textEditingController,
+    required this.keyboardStateController,
     this.defaultSelectedItems = const [],
     this.isMultiSelectionMode = false,
     this.items = const [],
@@ -49,6 +51,9 @@ class SelectionWidgetState<T> extends State<SelectionWidget<T>> {
   List<T> get _selectedItems => _selectedItemsNotifier.value;
   Timer? _debounce;
 
+  int _currentFocusedIndex = -1;
+  StreamSubscription? _streamSubscription;
+
   void searchBoxControllerListener() {
       if (_debounce?.isActive ?? false) _debounce?.cancel();
       _debounce = Timer(widget.popupProps.searchDelay, () {
@@ -60,7 +65,7 @@ class SelectionWidgetState<T> extends State<SelectionWidget<T>> {
   void initState() {
     super.initState();
     _selectedItemsNotifier.value = widget.defaultSelectedItems;
-
+    _streamSubscription = widget.keyboardStateController.stream.listen(_onKeyboardStateChange);
     searchBoxController = widget.textEditingController;
     searchBoxController.addListener(searchBoxControllerListener);
 
@@ -95,6 +100,8 @@ class SelectionWidgetState<T> extends State<SelectionWidget<T>> {
     if (widget.popupProps.listViewProps.controller == null) {
       scrollController.dispose();
     }
+
+    _streamSubscription?.cancel();
     super.dispose();
   }
 
@@ -175,9 +182,12 @@ class SelectionWidgetState<T> extends State<SelectionWidget<T>> {
                             itemCount: snapshot.data!.length,
                             itemBuilder: (context, index) {
                               var item = snapshot.data![index];
-                              return widget.isMultiSelectionMode
-                                  ? _itemWidgetMultiSelection(item)
-                                  : _itemWidgetSingleSelection(item);
+                              return Container(
+                                color: _currentFocusedIndex == index ? Colors.grey[300] : null,
+                                child: widget.isMultiSelectionMode
+                                    ? _itemWidgetMultiSelection(item)
+                                    : _itemWidgetSingleSelection(item),
+                              );
                             },
                           ),
                         );
@@ -293,6 +303,58 @@ class SelectionWidgetState<T> extends State<SelectionWidget<T>> {
           }
           return const SizedBox.shrink();
         });
+  }
+
+  void _onKeyboardStateChange(KeyboardState keyboardState) {
+    switch (keyboardState) {
+      case KeyboardState.up:
+        setState(() {
+          _currentFocusedIndex = (_currentFocusedIndex - 1 + _currentShowedItems.length) % _currentShowedItems.length;
+          _scrollToCurrentIndex();
+        });
+
+        break;
+      case KeyboardState.down:
+        setState(() {
+          _currentFocusedIndex = (_currentFocusedIndex + 1) % _currentShowedItems.length;
+          _scrollToCurrentIndex();
+        });
+        break;
+      case KeyboardState.enter:
+        _handleSelectedItem(_currentShowedItems[_currentFocusedIndex]);
+        break;
+      case KeyboardState.none:
+        break;
+    }
+  }
+
+  /// Scrolls to the item at `_currentFocusedIndex`, positioning it at the
+  /// bottom of the viewport if it's currently not fully visible.
+  ///
+  /// This method calculates the scroll offset based on the index and item height,
+  /// then adjusts the target offset to ensure the item is aligned at the bottom of the viewport.
+  /// If the item is already in view, no scrolling occurs.
+  void _scrollToCurrentIndex() {
+    if (_currentFocusedIndex < 0 || _currentFocusedIndex >= _currentShowedItems.length) return;
+
+    // Calculate the offset for the item and adjust it to bring the item to the bottom of the viewport
+    final itemExtent = widget.popupProps.listViewProps.itemExtent ?? 50.0;
+    final offset = _currentFocusedIndex * itemExtent;
+    final viewportHeight = scrollController.position.viewportDimension;
+
+    // Adjust target offset to position item at the bottom of the viewport
+    final targetOffset = (offset - viewportHeight + itemExtent).clamp(0, scrollController.position.maxScrollExtent);
+
+    // Animate to the calculated offset if the item is out of the viewport range or not at the bottom
+    final minVisible = scrollController.offset;
+    final maxVisible = minVisible + viewportHeight;
+    if (offset < minVisible || offset + itemExtent > maxVisible || offset != targetOffset) {
+      scrollController.animateTo(
+        targetOffset.toDouble(),
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 
   ///Function that filter item (online and offline) base on user filter
@@ -660,3 +722,5 @@ class SelectionWidgetState<T> extends State<SelectionWidget<T>> {
 
   List<T> get getSelectedItem => List.from(_selectedItems);
 }
+
+enum KeyboardState { up, down, enter, none }

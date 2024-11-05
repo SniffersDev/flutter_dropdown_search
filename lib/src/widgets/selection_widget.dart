@@ -336,6 +336,8 @@ class SelectionWidgetState<T> extends State<SelectionWidget<T>> {
   /// If the item is already in view, no scrolling occurs.
   void _scrollToCurrentIndex() {
     if (_currentFocusedIndex < 0 || _currentFocusedIndex >= _currentShowedItems.length) return;
+    
+    final scrollController = widget.popupProps.listViewProps.controller ?? this.scrollController;
 
     // Calculate the offset for the item and adjust it to bring the item to the bottom of the viewport
     final itemExtent = widget.popupProps.listViewProps.itemExtent ?? 50.0;

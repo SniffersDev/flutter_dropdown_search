@@ -326,44 +326,6 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
   }
 
   Widget _defaultSelectedItemWidget() {
-    Widget defaultItemMultiSelectionMode(T item) {
-      return Container(
-        height: 32,
-        padding: EdgeInsets.only(left: 8, right: 1),
-        margin: EdgeInsets.symmetric(horizontal: 2, vertical: 1),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
-          color: Theme.of(context).primaryColorLight,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Flexible(
-              child: Text(
-                _selectedItemAsString(item),
-                style: Theme.of(context).textTheme.titleSmall,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            MaterialButton(
-              height: 20,
-              shape: const CircleBorder(),
-              padding: const EdgeInsets.all(0),
-              minWidth: 20,
-              onPressed: () {
-                removeItem(item);
-              },
-              child: Icon(
-                Icons.close_outlined,
-                size: 20,
-              ),
-            )
-          ],
-        ),
-      );
-    }
-
     Widget selectedItemWidget() {
       if (widget.dropdownBuilder != null) {
         return widget.dropdownBuilder!(
@@ -377,7 +339,13 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
         );
       else if (isMultiSelectionMode) {
         return Wrap(
-          children: getSelectedItems.map((e) => defaultItemMultiSelectionMode(e)).toList(),
+          children: getSelectedItems
+              .map((e) => _MultiSelectionBoxWidget(
+                  title: _selectedItemAsString(e),
+                  onPressed: () {
+                    removeItem(e);
+                  }))
+              .toList(),
         );
       }
       return Text(
@@ -475,16 +443,30 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
             valueListenable: _isFocused,
             builder: (context, isFocused, w) {
               if (widget.isInlineSearchBar) {
-                return TextFormField(
-                  focusNode: _textFieldFocusNode,
-                  controller: _textEditingController,
-                  decoration: _manageDropdownDecoration(state),
-                  readOnly: false,
-                  onTap: _selectSearchMode,
-                  onChanged: (value) {
-                    _searchTextEditingController?.text = value;
-                  },
-                );
+                return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  if (getSelectedItems.isNotEmpty)
+                    Container(
+                        margin: EdgeInsets.all(10),
+                        child: Wrap(
+                          children: getSelectedItems
+                              .map((e) => _MultiSelectionBoxWidget(
+                                  title: _selectedItemAsString(e),
+                                  onPressed: () {
+                                    removeItem(e);
+                                  }))
+                              .toList(),
+                        )),
+                  TextFormField(
+                    focusNode: _textFieldFocusNode,
+                    controller: _textEditingController,
+                    decoration: _manageDropdownDecoration(state),
+                    readOnly: false,
+                    onTap: _selectSearchMode,
+                    onChanged: (value) {
+                      _searchTextEditingController?.text = value;
+                    },
+                  )
+                ]);
               }
 
               return InputDecorator(
@@ -698,7 +680,7 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
       child: _popupWidgetInstance(),
     );
 
-    _textEditingController.text = _selectedItemAsString(getSelectedItem);
+    _textEditingController.text = widget.isMultiSelectionMode ? '' : _selectedItemAsString(getSelectedItem);
   }
 
   Widget _popupWidgetInstance() {
@@ -896,4 +878,48 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
   List<T> get popupGetSelectedItems => _popupStateKey.currentState?.getSelectedItem ?? [];
 
   void updatePopupState() => _popupStateKey.currentState?.setState(() {});
+}
+
+class _MultiSelectionBoxWidget extends StatelessWidget {
+  final String title;
+  final VoidCallback onPressed;
+
+  _MultiSelectionBoxWidget({required this.title, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 32,
+      padding: EdgeInsets.only(left: 8, right: 1),
+      margin: EdgeInsets.symmetric(horizontal: 2, vertical: 1),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        color: Theme.of(context).primaryColorLight,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Flexible(
+            child: Text(
+              title,
+              style: Theme.of(context).textTheme.titleSmall,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          MaterialButton(
+            height: 20,
+            shape: const CircleBorder(),
+            padding: const EdgeInsets.all(0),
+            minWidth: 20,
+            onPressed: onPressed,
+            child: Icon(
+              Icons.close_outlined,
+              size: 20,
+            ),
+          )
+        ],
+      ),
+    );
+  }
 }

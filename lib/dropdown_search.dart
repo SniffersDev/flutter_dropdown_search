@@ -179,8 +179,6 @@ class DropdownSearch<T> extends StatefulWidget {
     this.asyncItems,
     this.dropdownBuilder,
     this.dropdownDecoratorProps = const DropDownDecoratorProps(),
-    this.clearButtonProps = const ClearButtonProps(),
-    this.dropdownButtonProps = const DropdownButtonProps(),
     this.enabled = true,
     this.filterFn,
     this.itemAsString,
@@ -201,6 +199,11 @@ class DropdownSearch<T> extends StatefulWidget {
         this.onSavedMultiSelection = null,
         this.onChangedMultiSelection = null,
         this.onBeforePopupOpeningMultiSelection = null,
+        this.clearButtonProps =
+            isInlineSearchBar ? const ClearButtonProps(isVisible: true) : const ClearButtonProps(isVisible: false),
+        this.dropdownButtonProps = isInlineSearchBar
+            ? const DropdownButtonProps(isVisible: false)
+            : const DropdownButtonProps(isVisible: true),
         super(key: key);
 
   DropdownSearch.multiSelection({
@@ -209,8 +212,6 @@ class DropdownSearch<T> extends StatefulWidget {
     this.items = const [],
     this.asyncItems,
     this.dropdownDecoratorProps = const DropDownDecoratorProps(),
-    this.clearButtonProps = const ClearButtonProps(),
-    this.dropdownButtonProps = const DropdownButtonProps(),
     this.enabled = true,
     this.filterFn,
     this.itemAsString,
@@ -241,6 +242,11 @@ class DropdownSearch<T> extends StatefulWidget {
         this.onSaved = null,
         this.onChanged = null,
         this.onBeforePopupOpening = null,
+        this.clearButtonProps =
+            isInlineSearchBar ? const ClearButtonProps(isVisible: true) : const ClearButtonProps(isVisible: false),
+        this.dropdownButtonProps = isInlineSearchBar
+            ? const DropdownButtonProps(isVisible: false)
+            : const DropdownButtonProps(isVisible: true),
         super(key: key);
 
   @override
@@ -264,8 +270,11 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
     _textEditingController = widget.popupProps.searchFieldProps.controller ?? TextEditingController();
     _textEditingController.text = _selectedItemAsString(widget.selectedItem);
 
-    _selectedItemsNotifier.value =
-        isMultiSelectionMode ? List.from(widget.selectedItems) : _itemToList(widget.selectedItem);
+    _selectedItemsNotifier.value = isMultiSelectionMode
+        ? List.from(widget.selectedItems)
+        : widget.selectedItem == null
+            ? <T>[]
+            : _itemToList(widget.selectedItem);
   }
 
   @override

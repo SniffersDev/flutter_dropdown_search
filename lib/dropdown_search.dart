@@ -166,8 +166,6 @@ class DropdownSearch<T> extends StatefulWidget {
   /// A method to integrate a search bar directly into the dropdown selection area.
   /// Here, the search bar and the dropdown trigger will be combined.
   /// default value is `false`, for not this will work only for single selction
-  /// Previously, a live search text field was added using `PopupProps.menu(showSearchBox: true)`.
-  /// `PopupProps.menu(showSearchBox: true)`. this method is deprecated
   final bool isInlineSearchBar;
 
   DropdownSearch({
@@ -254,12 +252,8 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
   final ValueNotifier<bool> _isFocused = ValueNotifier(false);
   final _popupStateKey = GlobalKey<SelectionWidgetState<T>>();
   final FocusNode _textFieldFocusNode = FocusNode();
-  final TextEditingController _textEditingController = TextEditingController();
+  late final TextEditingController _textEditingController;
   var _isDialogPresented = false;
-
-  /// This feature may be deprecated soon, as we plan to use only [_textEditingController]
-  /// in conjunction with `PopupProps.menu(showSearchBox: true)`.
-  TextEditingController? _searchTextEditingController;
 
   final StreamController<KeyboardState> keyboardStateController = StreamController<KeyboardState>.broadcast();
 
@@ -267,6 +261,7 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
   void initState() {
     super.initState();
 
+    _textEditingController = widget.popupProps.searchFieldProps.controller ?? TextEditingController();
     _textEditingController.text = _selectedItemAsString(widget.selectedItem);
 
     _selectedItemsNotifier.value =
@@ -405,9 +400,6 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
                   decoration: _manageDropdownDecoration(state),
                   readOnly: false,
                   onTap: _selectSearchMode,
-                  onChanged: (value) {
-                    _searchTextEditingController?.text = value;
-                  },
                 );
               }
               return InputDecorator(
@@ -462,9 +454,6 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
                     decoration: _manageDropdownDecoration(state),
                     readOnly: false,
                     onTap: _selectSearchMode,
-                    onChanged: (value) {
-                      _searchTextEditingController?.text = value;
-                    },
                   )
                 ]);
               }
@@ -684,15 +673,10 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
   }
 
   Widget _popupWidgetInstance() {
-    final textEditingContoller = widget.popupProps.searchFieldProps.controller ?? TextEditingController();
-    if (widget.isInlineSearchBar) {
-      textEditingContoller.text = _textEditingController.text;
-      _searchTextEditingController = textEditingContoller;
-    }
     return SelectionWidget<T>(
       key: _popupStateKey,
       keyboardStateController: keyboardStateController,
-      textEditingController: textEditingContoller,
+      textEditingController: _textEditingController,
       popupProps: widget.popupProps,
       itemAsString: widget.itemAsString,
       filterFn: widget.filterFn,

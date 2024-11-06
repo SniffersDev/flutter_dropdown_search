@@ -6,10 +6,6 @@ class PopupProps<T> {
   ///popup title
   final Widget? title;
 
-  ///the search box will be shown if true, hidden otherwise
-  @Deprecated('Use isInlineSearchBar property instead.')
-  final bool showSearchBox;
-
   final DropdownSearchPopupItemBuilder<T>? itemBuilder;
 
   /// object that passes all props to search field
@@ -84,7 +80,6 @@ class PopupProps<T> {
     this.mode = Mode.MENU,
     this.fit = FlexFit.tight,
     this.title,
-    this.showSearchBox = false,
     this.bottomSheetProps = const BottomSheetProps(),
     this.dialogProps = const DialogProps(),
     this.modalBottomSheetProps = const ModalBottomSheetProps(),
@@ -110,7 +105,6 @@ class PopupProps<T> {
   const PopupProps.menu({
     this.title,
     this.fit = FlexFit.tight,
-    this.showSearchBox = false,
     this.menuProps = const MenuProps(),
     this.searchFieldProps = const TextFieldProps(),
     this.scrollbarProps = const ScrollbarProps(),
@@ -136,7 +130,6 @@ class PopupProps<T> {
   const PopupProps.dialog({
     this.fit = FlexFit.tight,
     this.title,
-    this.showSearchBox = false,
     this.dialogProps = const DialogProps(),
     this.searchFieldProps = const TextFieldProps(),
     this.scrollbarProps = const ScrollbarProps(),
@@ -166,7 +159,6 @@ class PopupProps<T> {
   const PopupProps.bottomSheet({
     this.fit = FlexFit.tight,
     this.title,
-    this.showSearchBox = false,
     this.bottomSheetProps = const BottomSheetProps(),
     this.searchFieldProps = const TextFieldProps(),
     this.scrollbarProps = const ScrollbarProps(),
@@ -192,7 +184,6 @@ class PopupProps<T> {
   const PopupProps.modalBottomSheet({
     this.title,
     this.fit = FlexFit.tight,
-    this.showSearchBox = false,
     this.modalBottomSheetProps = const ModalBottomSheetProps(),
     this.searchFieldProps = const TextFieldProps(),
     this.scrollbarProps = const ScrollbarProps(),
@@ -238,7 +229,6 @@ class PopupPropsMultiSelection<T> extends PopupProps<T> {
     super.isFilterOnline,
     super.itemBuilder,
     super.disabledItemFn,
-    super.showSearchBox,
     super.searchFieldProps = const TextFieldProps(),
     super.favoriteItemProps = const FavoriteItemProps(),
     super.modalBottomSheetProps = const ModalBottomSheetProps(),
@@ -266,7 +256,6 @@ class PopupPropsMultiSelection<T> extends PopupProps<T> {
   const PopupPropsMultiSelection.menu({
     super.title,
     super.fit = FlexFit.tight,
-    super.showSearchBox = false,
     super.searchFieldProps = const TextFieldProps(),
     super.menuProps = const MenuProps(),
     super.favoriteItemProps = const FavoriteItemProps(),
@@ -294,7 +283,6 @@ class PopupPropsMultiSelection<T> extends PopupProps<T> {
   const PopupPropsMultiSelection.dialog({
     super.title,
     super.fit = FlexFit.tight,
-    super.showSearchBox = false,
     super.searchFieldProps = const TextFieldProps(),
     super.scrollbarProps = const ScrollbarProps(),
     super.listViewProps = const ListViewProps(),
@@ -326,7 +314,6 @@ class PopupPropsMultiSelection<T> extends PopupProps<T> {
   const PopupPropsMultiSelection.bottomSheet({
     super.title,
     super.fit = FlexFit.tight,
-    super.showSearchBox = false,
     super.searchFieldProps = const TextFieldProps(),
     super.listViewProps = const ListViewProps(),
     super.favoriteItemProps = const FavoriteItemProps(),
@@ -357,7 +344,6 @@ class PopupPropsMultiSelection<T> extends PopupProps<T> {
     super.fit = FlexFit.tight,
     super.itemBuilder,
     super.disabledItemFn,
-    super.showSearchBox,
     super.searchFieldProps = const TextFieldProps(),
     super.favoriteItemProps = const FavoriteItemProps(),
     super.modalBottomSheetProps = const ModalBottomSheetProps(),
@@ -396,7 +382,6 @@ class PopupPropsMultiSelection<T> extends PopupProps<T> {
           scrollbarProps: popupProps.scrollbarProps,
           searchDelay: popupProps.searchDelay,
           searchFieldProps: popupProps.searchFieldProps,
-          showSearchBox: popupProps.showSearchBox,
           showSelectedItems: popupProps.showSelectedItems,
           mode: popupProps.mode,
           bottomSheetProps: popupProps.bottomSheetProps,

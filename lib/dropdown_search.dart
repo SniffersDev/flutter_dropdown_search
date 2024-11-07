@@ -699,6 +699,10 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
     );
 
     _textEditingController.text = widget.isMultiSelectionMode ? '' : _selectedItemAsString(getSelectedItem);
+
+    if (widget.isInlineSearchBar) {
+      FocusScope.of(context).unfocus();
+    }
   }
 
   Widget _popupWidgetInstance() {

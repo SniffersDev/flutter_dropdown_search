@@ -269,12 +269,20 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
 
     _textEditingController = widget.popupProps.searchFieldProps.controller ?? TextEditingController();
     _textEditingController.text = _selectedItemAsString(widget.selectedItem);
+    _textFieldFocusNode.addListener(_handleFocusChange);
 
     _selectedItemsNotifier.value = isMultiSelectionMode
         ? List.from(widget.selectedItems)
         : widget.selectedItem == null
             ? <T>[]
             : _itemToList(widget.selectedItem);
+  }
+
+  @override
+  void dispose() {
+    _textFieldFocusNode.dispose();
+
+    super.dispose();
   }
 
   @override
@@ -379,7 +387,6 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
               return;
             }
           }
-          print('Not handled event: ${event.logicalKey}');
         },
         child: isMultiSelectionMode ? _formFieldMultiSelection() : _formFieldSingleSelection());
   }
@@ -512,62 +519,75 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
     final clearButtonPressed = () => clear();
     final dropdownButtonPressed = () => _selectSearchMode();
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: <Widget>[
-        if (widget.clearButtonProps.isVisible && getSelectedItems.isNotEmpty)
-          IconButton(
-            style: widget.clearButtonProps.style,
-            isSelected: widget.clearButtonProps.isSelected,
-            selectedIcon: widget.clearButtonProps.selectedIcon,
-            onPressed: widget.clearButtonProps.onPressed ?? clearButtonPressed,
-            icon: widget.clearButtonProps.icon,
-            constraints: widget.clearButtonProps.constraints,
-            hoverColor: widget.clearButtonProps.hoverColor,
-            highlightColor: widget.clearButtonProps.highlightColor,
-            splashColor: widget.clearButtonProps.splashColor,
-            color: widget.clearButtonProps.color,
-            focusColor: widget.clearButtonProps.focusColor,
-            iconSize: widget.clearButtonProps.iconSize,
-            padding: widget.clearButtonProps.padding,
-            splashRadius: widget.clearButtonProps.splashRadius,
-            alignment: widget.clearButtonProps.alignment,
-            autofocus: widget.clearButtonProps.autofocus,
-            disabledColor: widget.clearButtonProps.disabledColor,
-            enableFeedback: widget.clearButtonProps.enableFeedback,
-            focusNode: widget.clearButtonProps.focusNode,
-            mouseCursor: widget.clearButtonProps.mouseCursor,
-            tooltip: widget.clearButtonProps.tooltip,
-            visualDensity: widget.clearButtonProps.visualDensity,
-          ),
-        if (widget.dropdownButtonProps.isVisible)
-          IconButton(
-            style: widget.dropdownButtonProps.style,
-            isSelected: widget.dropdownButtonProps.isSelected,
-            selectedIcon: widget.dropdownButtonProps.selectedIcon,
-            onPressed: widget.dropdownButtonProps.onPressed ?? dropdownButtonPressed,
-            icon: _isDialogPresented ? widget.dropdownButtonProps.activeIcon : widget.dropdownButtonProps.icon,
-            constraints: widget.dropdownButtonProps.constraints,
-            hoverColor: widget.dropdownButtonProps.hoverColor,
-            highlightColor: widget.dropdownButtonProps.highlightColor,
-            splashColor: widget.dropdownButtonProps.splashColor,
-            color: widget.dropdownButtonProps.color,
-            focusColor: widget.dropdownButtonProps.focusColor,
-            iconSize: widget.dropdownButtonProps.iconSize,
-            padding: widget.dropdownButtonProps.padding,
-            splashRadius: widget.dropdownButtonProps.splashRadius,
-            alignment: widget.dropdownButtonProps.alignment,
-            autofocus: widget.dropdownButtonProps.autofocus,
-            disabledColor: widget.dropdownButtonProps.disabledColor,
-            enableFeedback: widget.dropdownButtonProps.enableFeedback,
-            focusNode: widget.dropdownButtonProps.focusNode,
-            mouseCursor: widget.dropdownButtonProps.mouseCursor,
-            tooltip: widget.dropdownButtonProps.tooltip,
-            visualDensity: widget.dropdownButtonProps.visualDensity,
-          ),
-      ],
-    );
+    return ValueListenableBuilder<TextEditingValue>(
+        valueListenable: _textEditingController,
+        builder: (context, textValue, child) {
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: <Widget>[
+              if (widget.clearButtonProps.isVisible &&
+                  (_textEditingController.text.isNotEmpty || getSelectedItems.isNotEmpty))
+                IconButton(
+                  style: widget.clearButtonProps.style,
+                  isSelected: widget.clearButtonProps.isSelected,
+                  selectedIcon: widget.clearButtonProps.selectedIcon,
+                  onPressed: widget.clearButtonProps.onPressed ?? clearButtonPressed,
+                  icon: widget.clearButtonProps.icon,
+                  constraints: widget.clearButtonProps.constraints,
+                  hoverColor: widget.clearButtonProps.hoverColor,
+                  highlightColor: widget.clearButtonProps.highlightColor,
+                  splashColor: widget.clearButtonProps.splashColor,
+                  color: widget.clearButtonProps.color,
+                  focusColor: widget.clearButtonProps.focusColor,
+                  iconSize: widget.clearButtonProps.iconSize,
+                  padding: widget.clearButtonProps.padding,
+                  splashRadius: widget.clearButtonProps.splashRadius,
+                  alignment: widget.clearButtonProps.alignment,
+                  autofocus: widget.clearButtonProps.autofocus,
+                  disabledColor: widget.clearButtonProps.disabledColor,
+                  enableFeedback: widget.clearButtonProps.enableFeedback,
+                  focusNode: widget.clearButtonProps.focusNode,
+                  mouseCursor: widget.clearButtonProps.mouseCursor,
+                  tooltip: widget.clearButtonProps.tooltip,
+                  visualDensity: widget.clearButtonProps.visualDensity,
+                ),
+              if (widget.dropdownButtonProps.isVisible)
+                IconButton(
+                  style: widget.dropdownButtonProps.style,
+                  isSelected: widget.dropdownButtonProps.isSelected,
+                  selectedIcon: widget.dropdownButtonProps.selectedIcon,
+                  onPressed: widget.dropdownButtonProps.onPressed ?? dropdownButtonPressed,
+                  icon: _isDialogPresented ? widget.dropdownButtonProps.activeIcon : widget.dropdownButtonProps.icon,
+                  constraints: widget.dropdownButtonProps.constraints,
+                  hoverColor: widget.dropdownButtonProps.hoverColor,
+                  highlightColor: widget.dropdownButtonProps.highlightColor,
+                  splashColor: widget.dropdownButtonProps.splashColor,
+                  color: widget.dropdownButtonProps.color,
+                  focusColor: widget.dropdownButtonProps.focusColor,
+                  iconSize: widget.dropdownButtonProps.iconSize,
+                  padding: widget.dropdownButtonProps.padding,
+                  splashRadius: widget.dropdownButtonProps.splashRadius,
+                  alignment: widget.dropdownButtonProps.alignment,
+                  autofocus: widget.dropdownButtonProps.autofocus,
+                  disabledColor: widget.dropdownButtonProps.disabledColor,
+                  enableFeedback: widget.dropdownButtonProps.enableFeedback,
+                  focusNode: widget.dropdownButtonProps.focusNode,
+                  mouseCursor: widget.dropdownButtonProps.mouseCursor,
+                  tooltip: widget.dropdownButtonProps.tooltip,
+                  visualDensity: widget.dropdownButtonProps.visualDensity,
+                ),
+            ],
+          );
+        });
+  }
+
+  /// Handles focus changes for the search text field, allowing actions to be triggered
+  /// when the field gains or loses focus.
+  void _handleFocusChange() {
+    if (_textFieldFocusNode.hasFocus) {
+      _selectSearchMode();
+    }
   }
 
   RelativeRect _position(RenderBox popupButtonObject, RenderBox overlay) {
@@ -755,6 +775,9 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
   ///If we close the popup , or maybe we just selected
   ///another widget we should clear the focus
   Future<void> _selectSearchMode() async {
+    if (_isDialogPresented) {
+      return;
+    }
     //handle onBefore popupOpening
     if (widget.onBeforePopupOpening != null) {
       if (await widget.onBeforePopupOpening!(getSelectedItem) == false) return;

@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
-
 import '../properties/menu_props.dart';
 
-Future<T?> showCustomMenu<T>({
-  required BuildContext context,
-  required MenuProps menuModeProps,
-  required RelativeRect position,
-  required Widget child,
-}) {
+Future<T?> showCustomMenu<T>(
+    {required BuildContext context,
+    required MenuProps menuModeProps,
+    required Size targetSize,
+    required Widget child,
+    required ValueNotifier<RelativeRect> positionNotifier}) {
   final NavigatorState navigator = Navigator.of(context);
   return navigator.push(
     _PopupMenuRoute<T>(
       context: context,
-      position: position,
       child: child,
+      targetSize: targetSize,
+      positionNotifier: positionNotifier,
       menuModeProps: menuModeProps,
       capturedThemes: InheritedTheme.capture(
         from: context,
@@ -25,24 +25,30 @@ Future<T?> showCustomMenu<T>({
 
 // Positioning of the menu on the screen.
 class _PopupMenuRouteLayout extends SingleChildLayoutDelegate {
-  // Rectangle of underlying button, relative to the overlay's dimensions.
   final RelativeRect position;
   final BuildContext context;
+  final Size targetSize;
 
   _PopupMenuRouteLayout(
     this.context,
     this.position,
+    this.targetSize,
   );
 
   @override
   BoxConstraints getConstraintsForChild(BoxConstraints constraints) {
     final parentRenderBox = context.findRenderObject() as RenderBox;
-    //keyBoardHeight is height of keyboard if showing
-    double keyBoardHeight = MediaQuery.of(context).viewInsets.bottom;
+    double keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
     double safeAreaTop = MediaQuery.of(context).padding.top;
     double safeAreaBottom = MediaQuery.of(context).padding.bottom;
     double totalSafeArea = safeAreaTop + safeAreaBottom;
-    double maxHeight = constraints.minHeight - keyBoardHeight - totalSafeArea;
+
+    double availableHeightBelow = constraints.maxHeight - position.top - keyboardHeight - totalSafeArea;
+    double availableHeightAbove = position.top - safeAreaTop;
+
+    // Determine the maximum height available for the popup
+    double maxHeight = availableHeightBelow >= availableHeightAbove ? availableHeightBelow : availableHeightAbove;
+
     return BoxConstraints.loose(
       Size(
         parentRenderBox.size.width - position.right - position.left,
@@ -53,22 +59,19 @@ class _PopupMenuRouteLayout extends SingleChildLayoutDelegate {
 
   @override
   Offset getPositionForChild(Size size, Size childSize) {
-    // size: The size of the overlay.
-    // childSize: The size of the menu, when fully open, as determined by
-    // getConstraintsForChild.
+    double keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+    double availableHeightBelow = size.height - position.top - keyboardHeight;
+    double availableHeightAbove = position.top;
 
-    //keyBoardHeight is height of keyboard if showing
-    double keyBoardHeight = MediaQuery.of(context).viewInsets.bottom;
+    // Decide if we should show the popup above or below
+    double padding = 20;
+    double y = availableHeightBelow >= childSize.height
+        ? position.top
+        : (availableHeightAbove >= childSize.height
+            ? position.top - childSize.height - targetSize.height - padding
+            : size.height - childSize.height - keyboardHeight - targetSize.height - padding);
 
     double x = position.left;
-
-    // Find the ideal vertical position.
-    double y = position.top;
-    // check if we are in the bottom
-    if (y + childSize.height > size.height - keyBoardHeight) {
-      y = size.height - childSize.height - keyBoardHeight;
-    }
-
     return Offset(x, y);
   }
 
@@ -81,17 +84,18 @@ class _PopupMenuRouteLayout extends SingleChildLayoutDelegate {
 class _PopupMenuRoute<T> extends PopupRoute<T> {
   final MenuProps menuModeProps;
   final BuildContext context;
-  final RelativeRect position;
   final Widget child;
+  final Size targetSize;
   final CapturedThemes capturedThemes;
+  final ValueNotifier<RelativeRect> positionNotifier;
 
-  _PopupMenuRoute({
-    required this.context,
-    required this.menuModeProps,
-    required this.position,
-    required this.capturedThemes,
-    required this.child,
-  });
+  _PopupMenuRoute(
+      {required this.context,
+      required this.menuModeProps,
+      required this.capturedThemes,
+      required this.targetSize,
+      required this.child,
+      required this.positionNotifier});
 
   @override
   Duration get transitionDuration => menuModeProps.animationDuration;
@@ -127,9 +131,14 @@ class _PopupMenuRoute<T> extends PopupRoute<T> {
       child: child,
     );
 
-    return CustomSingleChildLayout(
-      delegate: _PopupMenuRouteLayout(context, position),
-      child: capturedThemes.wrap(menu),
+    return ValueListenableBuilder<RelativeRect>(
+      valueListenable: positionNotifier,
+      builder: (context, position, _) {
+        return CustomSingleChildLayout(
+          delegate: _PopupMenuRouteLayout(context, position, targetSize),
+          child: capturedThemes.wrap(menu),
+        );
+      },
     );
   }
 }

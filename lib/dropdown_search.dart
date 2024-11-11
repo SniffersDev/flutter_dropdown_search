@@ -253,7 +253,7 @@ class DropdownSearch<T> extends StatefulWidget {
   DropdownSearchState<T> createState() => DropdownSearchState<T>();
 }
 
-class DropdownSearchState<T> extends State<DropdownSearch<T>> {
+class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindingObserver {
   final ValueNotifier<List<T>> _selectedItemsNotifier = ValueNotifier([]);
   final ValueNotifier<bool> _isFocused = ValueNotifier(false);
   final _popupStateKey = GlobalKey<SelectionWidgetState<T>>();
@@ -263,9 +263,12 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
 
   final StreamController<KeyboardState> keyboardStateController = StreamController<KeyboardState>.broadcast();
 
+  final ValueNotifier<RelativeRect> _overlayPositionNotifier = ValueNotifier(RelativeRect.fill);
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
 
     _textEditingController = widget.popupProps.searchFieldProps.controller ?? TextEditingController();
     _textEditingController.text = _selectedItemAsString(widget.selectedItem);
@@ -281,8 +284,32 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
   @override
   void dispose() {
     _textFieldFocusNode.dispose();
+    _overlayPositionNotifier.dispose();
+    WidgetsBinding.instance.removeObserver(this);
 
     super.dispose();
+  }
+
+  @override
+  void didChangeMetrics() {
+    super.didChangeMetrics();
+
+    _updateOverlayPosition();
+  }
+
+  void _updateOverlayPosition() {
+    final popupButtonObject = context.findRenderObject() as RenderBox?;
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox?;
+
+    if (popupButtonObject != null && overlay != null) {
+      _overlayPositionNotifier.value = RelativeRect.fromSize(
+        Rect.fromPoints(
+          popupButtonObject.localToGlobal(popupButtonObject.size.bottomLeft(Offset.zero), ancestor: overlay),
+          popupButtonObject.localToGlobal(popupButtonObject.size.bottomRight(Offset.zero), ancestor: overlay),
+        ),
+        overlay.size,
+      );
+    }
   }
 
   @override
@@ -590,17 +617,6 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
     }
   }
 
-  RelativeRect _position(RenderBox popupButtonObject, RenderBox overlay) {
-    // Calculate the show-up area for the dropdown using button's size & position based on the `overlay` used as the coordinate space.
-    return RelativeRect.fromSize(
-      Rect.fromPoints(
-        popupButtonObject.localToGlobal(popupButtonObject.size.bottomLeft(Offset.zero), ancestor: overlay),
-        popupButtonObject.localToGlobal(popupButtonObject.size.bottomRight(Offset.zero), ancestor: overlay),
-      ),
-      Size(overlay.size.width, overlay.size.height),
-    );
-  }
-
   ///open dialog
   Future _openSelectDialog() {
     return showGeneralDialog(
@@ -687,14 +703,13 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
         FocusScope.of(context).requestFocus(_textFieldFocusNode);
       });
     }
+    _updateOverlayPosition();
 
     await showCustomMenu<T>(
       menuModeProps: widget.popupProps.menuProps,
       context: context,
-      position: (widget.popupProps.menuProps.positionCallback ?? _position)(
-        popupButtonObject,
-        overlay,
-      ),
+      positionNotifier: _overlayPositionNotifier,
+      targetSize: popupButtonObject.size,
       child: _popupWidgetInstance(),
     );
 

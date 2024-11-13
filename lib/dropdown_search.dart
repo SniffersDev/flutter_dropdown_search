@@ -264,6 +264,7 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindin
   final StreamController<KeyboardState> keyboardStateController = StreamController<KeyboardState>.broadcast();
 
   final ValueNotifier<RelativeRect> _overlayPositionNotifier = ValueNotifier(RelativeRect.fill);
+  final GlobalKey _formFieldKey = GlobalKey();
 
   @override
   void initState() {
@@ -423,6 +424,7 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindin
 
   Widget _formFieldSingleSelection() {
     return FormField<T>(
+      key: _formFieldKey,
       enabled: widget.enabled,
       onSaved: widget.onSaved,
       validator: widget.validator,
@@ -463,59 +465,62 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindin
   }
 
   Widget _formFieldMultiSelection() {
-    return FormField<List<T>>(
-      enabled: widget.enabled,
-      onSaved: widget.onSavedMultiSelection,
-      validator: widget.validatorMultiSelection,
-      autovalidateMode: widget.autoValidateMode,
-      initialValue: widget.selectedItems,
-      builder: (FormFieldState<List<T>> state) {
-        if (state.value != getSelectedItems) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if(mounted) {
-              state.didChange(getSelectedItems);
-            }
-          });
-        }
-        return ValueListenableBuilder<bool>(
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      if (getSelectedItems.isNotEmpty)
+        ValueListenableBuilder<bool>(
             valueListenable: _isFocused,
-            builder: (context, isFocused, w) {
-              if (widget.isInlineSearchBar) {
-                return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  if (getSelectedItems.isNotEmpty)
-                    Container(
-                        margin: EdgeInsets.all(10),
-                        child: Wrap(
-                          children: getSelectedItems
-                              .map((e) => _MultiSelectionBoxWidget(
-                                  title: _selectedItemAsString(e),
-                                  onPressed: () {
-                                    removeItem(e);
-                                  }))
-                              .toList(),
-                        )),
-                  TextFormField(
+            builder: (context, isFocused, w) => Container(
+                margin: EdgeInsets.all(10),
+                child: Wrap(
+                  children: getSelectedItems
+                      .map((e) => _MultiSelectionBoxWidget(
+                          title: _selectedItemAsString(e),
+                          onPressed: () {
+                            removeItem(e);
+                          }))
+                      .toList(),
+                ))),
+      FormField<List<T>>(
+        key: _formFieldKey,
+        enabled: widget.enabled,
+        onSaved: widget.onSavedMultiSelection,
+        validator: widget.validatorMultiSelection,
+        autovalidateMode: widget.autoValidateMode,
+        initialValue: widget.selectedItems,
+        builder: (FormFieldState<List<T>> state) {
+          if (state.value != getSelectedItems) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                state.didChange(getSelectedItems);
+              }
+            });
+          }
+          return ValueListenableBuilder<bool>(
+              valueListenable: _isFocused,
+              builder: (context, isFocused, w) {
+                if (widget.isInlineSearchBar) {
+                  return TextFormField(
                     focusNode: _textFieldFocusNode,
                     controller: _textEditingController,
                     decoration: _manageDropdownDecoration(state),
                     readOnly: false,
                     onTap: _selectSearchMode,
-                  )
-                ]);
-              }
+                  );
+                }
 
-              return InputDecorator(
-                baseStyle: widget.dropdownDecoratorProps.baseStyle,
-                textAlign: widget.dropdownDecoratorProps.textAlign,
-                textAlignVertical: widget.dropdownDecoratorProps.textAlignVertical,
-                isEmpty: getSelectedItems.isEmpty && widget.dropdownBuilderMultiSelection == null,
-                isFocused: isFocused,
-                decoration: _manageDropdownDecoration(state),
-                child: _defaultSelectedItemWidget(),
-              );
-            });
-      },
-    );
+                return InputDecorator(
+                  baseStyle: widget.dropdownDecoratorProps.baseStyle,
+                  textAlign: widget.dropdownDecoratorProps.textAlign,
+                  textAlignVertical: widget.dropdownDecoratorProps.textAlignVertical,
+                  isEmpty: getSelectedItems.isEmpty && widget.dropdownBuilderMultiSelection == null,
+                  isFocused: isFocused,
+                  decoration: _manageDropdownDecoration(state),
+                  child: _defaultSelectedItemWidget(),
+                );
+              });
+        },
+      )
+    ]);
   }
 
   ///manage dropdownSearch field decoration
@@ -696,7 +701,9 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindin
   ///openMenu
   Future _openMenu() async {
     // Here we get the render object of our physical button, later to get its size & position
-    final popupButtonObject = context.findRenderObject() as RenderBox;
+    final RenderBox? textFieldBox = _formFieldKey.currentState?.context?.findRenderObject() as RenderBox?;
+
+    final popupButtonObject = textFieldBox ?? (context.findRenderObject() as RenderBox);
 
     if (widget.isInlineSearchBar) {
       // After opening the menu, the focus changes. We need to refocus on our text field.

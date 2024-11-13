@@ -29,6 +29,9 @@ class _PopupMenuRouteLayout extends SingleChildLayoutDelegate {
   final BuildContext context;
   final Size targetSize;
 
+  /// Padding from the target area when the dropdown menu is positioned above it.
+  final double topPadding = 20.0;
+
   _PopupMenuRouteLayout(
     this.context,
     this.position,
@@ -44,10 +47,13 @@ class _PopupMenuRouteLayout extends SingleChildLayoutDelegate {
     double totalSafeArea = safeAreaTop + safeAreaBottom;
 
     double availableHeightBelow = constraints.maxHeight - position.top - keyboardHeight - totalSafeArea;
-    double availableHeightAbove = position.top - safeAreaTop;
+    double availableHeightAbove = position.top - safeAreaTop - targetSize.height - topPadding;
 
-    // Determine the maximum height available for the popup
+    // Determine the maximum height available for the popup based on space above or below
     double maxHeight = availableHeightBelow >= availableHeightAbove ? availableHeightBelow : availableHeightAbove;
+
+    // Ensure maxHeight does not go negative
+    maxHeight = maxHeight > 0 ? maxHeight : constraints.maxHeight;
 
     return BoxConstraints.loose(
       Size(
@@ -64,12 +70,11 @@ class _PopupMenuRouteLayout extends SingleChildLayoutDelegate {
     double availableHeightAbove = position.top;
 
     // Decide if we should show the popup above or below
-    double padding = 20;
     double y = availableHeightBelow >= childSize.height
         ? position.top
         : (availableHeightAbove >= childSize.height
-            ? position.top - childSize.height - targetSize.height - padding
-            : size.height - childSize.height - keyboardHeight - targetSize.height - padding);
+            ? position.top - childSize.height - targetSize.height - topPadding
+            : size.height - childSize.height - keyboardHeight - targetSize.height - topPadding);
 
     double x = position.left;
     return Offset(x, y);

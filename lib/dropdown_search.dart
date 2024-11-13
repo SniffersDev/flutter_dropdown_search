@@ -294,7 +294,10 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindin
   void didChangeMetrics() {
     super.didChangeMetrics();
 
-    _updateOverlayPosition();
+    // Update position after rendering because current positions may occasionally be inaccurate
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _updateOverlayPosition();
+    });
   }
 
   void _updateOverlayPosition() {
@@ -694,8 +697,6 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindin
   Future _openMenu() async {
     // Here we get the render object of our physical button, later to get its size & position
     final popupButtonObject = context.findRenderObject() as RenderBox;
-    // Get the render object of the overlay used in `Navigator` / `MaterialApp`, i.e. screen size reference
-    var overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
 
     if (widget.isInlineSearchBar) {
       // After opening the menu, the focus changes. We need to refocus on our text field.

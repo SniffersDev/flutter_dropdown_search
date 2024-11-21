@@ -701,7 +701,7 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindin
   ///openMenu
   Future _openMenu() async {
     // Here we get the render object of our physical button, later to get its size & position
-    final RenderBox? textFieldBox = _formFieldKey.currentState?.context?.findRenderObject() as RenderBox?;
+    final RenderBox? textFieldBox = _formFieldKey.currentState?.context.findRenderObject() as RenderBox?;
 
     final popupButtonObject = textFieldBox ?? (context.findRenderObject() as RenderBox);
 
@@ -733,6 +733,7 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindin
       key: _popupStateKey,
       keyboardStateController: keyboardStateController,
       textEditingController: _textEditingController,
+      isSearchMode: widget.isInlineSearchBar,
       popupProps: widget.popupProps,
       itemAsString: widget.itemAsString,
       filterFn: widget.filterFn,

@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../dropdown_search.dart';
 import 'checkbox_widget.dart';
@@ -19,7 +18,7 @@ class SelectionWidget<T> extends StatefulWidget {
   final bool isMultiSelectionMode;
   final TextEditingController textEditingController;
   final StreamController<KeyboardState> keyboardStateController;
-
+  final bool isSearchMode;
   const SelectionWidget({
     Key? key,
     required this.popupProps,
@@ -27,6 +26,7 @@ class SelectionWidget<T> extends StatefulWidget {
     required this.keyboardStateController,
     this.defaultSelectedItems = const [],
     this.isMultiSelectionMode = false,
+    this.isSearchMode = true,
     this.items = const [],
     this.onChanged,
     this.asyncItems,
@@ -359,6 +359,11 @@ class SelectionWidgetState<T> extends State<SelectionWidget<T>> {
   ///[filter] is the filter keyword
   ///[isFirstLoad] true if it's the first time we load data from online, false other wises
   Future<void> _manageItemsByFilter(String filter, {bool isFirstLoad = false}) async {
+    if(!widget.isSearchMode){
+      addDataToStream(_cachedItems);
+      return;
+    }
+
     _loadingNotifier.value = true;
 
     List<T> applyFilter(String filter) {

@@ -359,8 +359,12 @@ class SelectionWidgetState<T> extends State<SelectionWidget<T>> {
   ///[filter] is the filter keyword
   ///[isFirstLoad] true if it's the first time we load data from online, false other wises
   Future<void> _manageItemsByFilter(String filter, {bool isFirstLoad = false}) async {
-    if(!widget.isSearchMode){
-      addDataToStream(_cachedItems);
+    if (!widget.isSearchMode) {
+      if (isFirstLoad) {
+        _cachedItems.clear();
+        _cachedItems.addAll(widget.items);
+      }
+      addDataToStream(widget.items);
       return;
     }
 

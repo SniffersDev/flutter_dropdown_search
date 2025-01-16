@@ -395,23 +395,24 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindin
 
   Widget _formField() {
     return KeyboardListener(
-        focusNode: FocusNode(),
-        onKeyEvent: (KeyEvent event) {
-          if (event.logicalKey == LogicalKeyboardKey.enter) {
-            keyboardStateController.add(KeyboardState.enter);
+      focusNode: FocusNode(),
+      onKeyEvent: (KeyEvent event) {
+        if (event.logicalKey == LogicalKeyboardKey.enter) {
+          keyboardStateController.add(KeyboardState.enter);
+          return;
+        }
+        if (event is KeyUpEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+            keyboardStateController.add(KeyboardState.up);
+            return;
+          } else if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+            keyboardStateController.add(KeyboardState.down);
             return;
           }
-          if (event is KeyUpEvent) {
-            if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
-              keyboardStateController.add(KeyboardState.up);
-              return;
-            } else if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
-              keyboardStateController.add(KeyboardState.down);
-              return;
-            }
-          }
-        },
-        child: isMultiSelectionMode ? _formFieldMultiSelection() : _formFieldSingleSelection());
+        }
+      },
+      child: isMultiSelectionMode ? _formFieldMultiSelection() : _formFieldSingleSelection(),
+    );
   }
 
   Widget _formFieldSingleSelection() {
@@ -551,7 +552,8 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindin
     final clearButtonPressed = () => clear();
     final dropdownButtonPressed = () => _selectSearchMode();
 
-    return ExcludeFocus(child: ValueListenableBuilder<TextEditingValue>(
+    return ExcludeFocus(
+      child: ValueListenableBuilder<TextEditingValue>(
         valueListenable: _textEditingController,
         builder: (context, textValue, child) {
           return Row(
@@ -584,12 +586,7 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindin
                   tooltip: widget.clearButtonProps.tooltip,
                   visualDensity: widget.clearButtonProps.visualDensity,
                 ),
-              if(_isDialogPresented)
-                IconButton(
-                  onPressed: (){},
-                  icon: Icon(Icons.keyboard_arrow_up),
-                ),
-              if (widget.dropdownButtonProps.isVisible)
+              if (widget.dropdownButtonProps.isVisible || _isDialogPresented)
                 IconButton(
                   style: widget.dropdownButtonProps.style,
                   isSelected: widget.dropdownButtonProps.isSelected,
@@ -616,7 +613,9 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindin
                 ),
             ],
           );
-        }));
+        },
+      ),
+    );
   }
 
   /// Handles focus changes for the search text field, allowing actions to be triggered

@@ -79,7 +79,8 @@ class DropdownSearch<T> extends StatefulWidget {
   ///function that returns item from API
   final DropdownSearchOnFind<T>? asyncItems;
 
-  ///called when a new item is selected
+  ///Please be carefull when implementing this,
+  /// keep in mind that it should also receive null value for clearing the selected item
   final ValueChanged<T?>? onChanged;
 
   ///called when a new items are selected
@@ -395,24 +396,23 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindin
 
   Widget _formField() {
     return KeyboardListener(
-      focusNode: FocusNode(),
-      onKeyEvent: (KeyEvent event) {
-        if (event.logicalKey == LogicalKeyboardKey.enter) {
-          keyboardStateController.add(KeyboardState.enter);
-          return;
-        }
-        if (event is KeyUpEvent) {
-          if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
-            keyboardStateController.add(KeyboardState.up);
-            return;
-          } else if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
-            keyboardStateController.add(KeyboardState.down);
+        focusNode: FocusNode(),
+        onKeyEvent: (KeyEvent event) {
+          if (event.logicalKey == LogicalKeyboardKey.enter) {
+            keyboardStateController.add(KeyboardState.enter);
             return;
           }
-        }
-      },
-      child: isMultiSelectionMode ? _formFieldMultiSelection() : _formFieldSingleSelection(),
-    );
+          if (event is KeyUpEvent) {
+            if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+              keyboardStateController.add(KeyboardState.up);
+              return;
+            } else if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+              keyboardStateController.add(KeyboardState.down);
+              return;
+            }
+          }
+        },
+        child: isMultiSelectionMode ? _formFieldMultiSelection() : _formFieldSingleSelection());
   }
 
   Widget _formFieldSingleSelection() {
@@ -552,8 +552,7 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindin
     final clearButtonPressed = () => clear();
     final dropdownButtonPressed = () => _selectSearchMode();
 
-    return ExcludeFocus(
-      child: ValueListenableBuilder<TextEditingValue>(
+    return ExcludeFocus(child: ValueListenableBuilder<TextEditingValue>(
         valueListenable: _textEditingController,
         builder: (context, textValue, child) {
           return Row(
@@ -586,7 +585,12 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindin
                   tooltip: widget.clearButtonProps.tooltip,
                   visualDensity: widget.clearButtonProps.visualDensity,
                 ),
-              if (widget.dropdownButtonProps.isVisible || _isDialogPresented)
+              if(_isDialogPresented)
+                IconButton(
+                  onPressed: () {},
+                  icon: Icon(Icons.keyboard_arrow_up),
+                ),
+              if (widget.dropdownButtonProps.isVisible)
                 IconButton(
                   style: widget.dropdownButtonProps.style,
                   isSelected: widget.dropdownButtonProps.isSelected,
@@ -613,9 +617,7 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindin
                 ),
             ],
           );
-        },
-      ),
-    );
+        }));
   }
 
   /// Handles focus changes for the search text field, allowing actions to be triggered

@@ -476,6 +476,14 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>>
                   _selectSearchMode();
                 },
                 onChanged: (s) {
+                  if (s == '') {
+                    if (widget.clearButtonProps.onPressed != null) {
+                      widget.clearButtonProps.onPressed!();
+                    } else {
+                      clear();
+                    }
+                  }
+
                   _selectSearchMode();
                 },
               );

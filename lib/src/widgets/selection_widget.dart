@@ -126,108 +126,82 @@ class SelectionWidgetState<T> extends State<SelectionWidget<T>> {
               _favoriteItemsWidget(),
               Flexible(
                 fit: widget.popupProps.fit,
-                child: Stack(
-                  children: <Widget>[
-                    StreamBuilder<List<T>>(
-                      stream: _itemsStream.stream,
-                      builder: (context, snapshot) {
-                        if (snapshot.hasError) {
-                          return _errorWidget(snapshot.error);
-                        } else if (!snapshot.hasData) {
-                          return _loadingWidget();
-                        } else if (snapshot.data!.isEmpty) {
-                          return _noDataWidget();
-                        }
+                child: RawScrollbar(
+                  controller: widget.popupProps.listViewProps.controller ?? scrollController,
+                  thumbVisibility: widget.popupProps.scrollbarProps.thumbVisibility,
+                  trackVisibility: widget.popupProps.scrollbarProps.trackVisibility,
+                  thickness: widget.popupProps.scrollbarProps.thickness,
+                  radius: widget.popupProps.scrollbarProps.radius,
+                  notificationPredicate: widget.popupProps.scrollbarProps.notificationPredicate,
+                  interactive: widget.popupProps.scrollbarProps.interactive,
+                  scrollbarOrientation: widget.popupProps.scrollbarProps.scrollbarOrientation,
+                  thumbColor: widget.popupProps.scrollbarProps.thumbColor,
+                  fadeDuration: widget.popupProps.scrollbarProps.fadeDuration,
+                  crossAxisMargin: widget.popupProps.scrollbarProps.crossAxisMargin,
+                  mainAxisMargin: widget.popupProps.scrollbarProps.mainAxisMargin,
+                  minOverscrollLength: widget.popupProps.scrollbarProps.minOverscrollLength,
+                  minThumbLength: widget.popupProps.scrollbarProps.minThumbLength,
+                  pressDuration: widget.popupProps.scrollbarProps.pressDuration,
+                  shape: widget.popupProps.scrollbarProps.shape,
+                  timeToFade: widget.popupProps.scrollbarProps.timeToFade,
+                  trackBorderColor: widget.popupProps.scrollbarProps.trackBorderColor,
+                  trackColor: widget.popupProps.scrollbarProps.trackColor,
+                  trackRadius: widget.popupProps.scrollbarProps.trackRadius,
+                  child: CustomScrollView(
+                    controller: widget.popupProps.listViewProps.controller ?? scrollController,
+                    shrinkWrap: widget.popupProps.listViewProps.shrinkWrap,
+                    scrollDirection: widget.popupProps.listViewProps.scrollDirection,
+                    reverse: widget.popupProps.listViewProps.reverse,
+                    primary: widget.popupProps.listViewProps.primary,
+                    physics: widget.popupProps.listViewProps.physics,
+                    cacheExtent: widget.popupProps.listViewProps.cacheExtent,
+                    semanticChildCount: widget.popupProps.listViewProps.semanticChildCount,
+                    dragStartBehavior: widget.popupProps.listViewProps.dragStartBehavior,
+                    keyboardDismissBehavior: widget.popupProps.listViewProps.keyboardDismissBehavior,
+                    restorationId: widget.popupProps.listViewProps.restorationId,
+                    clipBehavior: widget.popupProps.listViewProps.clipBehavior,
+                    slivers: [
+                      SliverPersistentHeader(
+                        pinned: true,
+                        delegate: _ClearButtonDelegate(
+                          child: widget.clearButton,
+                        ),
+                      ),
+                      StreamBuilder<List<T>>(
+                        stream: _itemsStream.stream,
+                        builder: (context, snapshot) {
+                          if (snapshot.hasError) {
+                            return SliverToBoxAdapter(child: _errorWidget(snapshot.error));
+                          } else if (!snapshot.hasData) {
+                            return SliverToBoxAdapter(child: _loadingWidget());
+                          } else if (snapshot.data!.isEmpty) {
+                            return SliverToBoxAdapter(child: _noDataWidget());
+                          }
 
-                        return RawScrollbar(
-                          controller: widget.popupProps.listViewProps.controller ?? scrollController,
-                          thumbVisibility: widget.popupProps.scrollbarProps.thumbVisibility,
-                          trackVisibility: widget.popupProps.scrollbarProps.trackVisibility,
-                          thickness: widget.popupProps.scrollbarProps.thickness,
-                          radius: widget.popupProps.scrollbarProps.radius,
-                          notificationPredicate: widget.popupProps.scrollbarProps.notificationPredicate,
-                          interactive: widget.popupProps.scrollbarProps.interactive,
-                          scrollbarOrientation: widget.popupProps.scrollbarProps.scrollbarOrientation,
-                          thumbColor: widget.popupProps.scrollbarProps.thumbColor,
-                          fadeDuration: widget.popupProps.scrollbarProps.fadeDuration,
-                          crossAxisMargin: widget.popupProps.scrollbarProps.crossAxisMargin,
-                          mainAxisMargin: widget.popupProps.scrollbarProps.mainAxisMargin,
-                          minOverscrollLength: widget.popupProps.scrollbarProps.minOverscrollLength,
-                          minThumbLength: widget.popupProps.scrollbarProps.minThumbLength,
-                          pressDuration: widget.popupProps.scrollbarProps.pressDuration,
-                          shape: widget.popupProps.scrollbarProps.shape,
-                          timeToFade: widget.popupProps.scrollbarProps.timeToFade,
-                          trackBorderColor: widget.popupProps.scrollbarProps.trackBorderColor,
-                          trackColor: widget.popupProps.scrollbarProps.trackColor,
-                          trackRadius: widget.popupProps.scrollbarProps.trackRadius,
-                          child: CustomScrollView(
-                            controller: widget.popupProps.listViewProps.controller ?? scrollController,
-                            shrinkWrap: widget.popupProps.listViewProps.shrinkWrap,
-                            scrollDirection: widget.popupProps.listViewProps.scrollDirection,
-                            reverse: widget.popupProps.listViewProps.reverse,
-                            primary: widget.popupProps.listViewProps.primary,
-                            physics: widget.popupProps.listViewProps.physics,
-                            cacheExtent: widget.popupProps.listViewProps.cacheExtent,
-                            semanticChildCount: widget.popupProps.listViewProps.semanticChildCount,
-                            dragStartBehavior: widget.popupProps.listViewProps.dragStartBehavior,
-                            keyboardDismissBehavior: widget.popupProps.listViewProps.keyboardDismissBehavior,
-                            restorationId: widget.popupProps.listViewProps.restorationId,
-                            clipBehavior: widget.popupProps.listViewProps.clipBehavior,
-                            slivers: [
-                              SliverPersistentHeader(
-                                pinned: true,
-                                delegate: _ClearButtonDelegate(
-                                  child: widget.clearButton,
-                                ),
-                              ),
-                              SliverPadding(
-                                padding: widget.popupProps.listViewProps.padding ?? EdgeInsets.zero,
-                                sliver: widget.popupProps.listViewProps.itemExtent != null
-                                    ? SliverFixedExtentList(
-                                        itemExtent: widget.popupProps.listViewProps.itemExtent!,
-                                        delegate: SliverChildBuilderDelegate(
-                                          (context, index) {
-                                            var item = snapshot.data![index];
-                                            return Container(
-                                              color: _currentFocusedIndex == (index + 1) ? Colors.grey[300] : null,
-                                              child: widget.isMultiSelectionMode
-                                                  ? _itemWidgetMultiSelection(item)
-                                                  : _itemWidgetSingleSelection(item),
-                                            );
-                                          },
-                                          childCount: snapshot.data!.length,
-                                          addAutomaticKeepAlives:
-                                              widget.popupProps.listViewProps.addAutomaticKeepAlives,
-                                          addRepaintBoundaries: widget.popupProps.listViewProps.addRepaintBoundaries,
-                                          addSemanticIndexes: widget.popupProps.listViewProps.addSemanticIndexes,
-                                        ),
-                                      )
-                                    : SliverList(
-                                        delegate: SliverChildBuilderDelegate(
-                                          (context, index) {
-                                            var item = snapshot.data![index];
-                                            return Container(
-                                              color: _currentFocusedIndex == (index + 1) ? Colors.grey[300] : null,
-                                              child: widget.isMultiSelectionMode
-                                                  ? _itemWidgetMultiSelection(item)
-                                                  : _itemWidgetSingleSelection(item),
-                                            );
-                                          },
-                                          childCount: snapshot.data!.length,
-                                          addAutomaticKeepAlives:
-                                              widget.popupProps.listViewProps.addAutomaticKeepAlives,
-                                          addRepaintBoundaries: widget.popupProps.listViewProps.addRepaintBoundaries,
-                                          addSemanticIndexes: widget.popupProps.listViewProps.addSemanticIndexes,
-                                        ),
-                                      ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                    _loadingWidget()
-                  ],
+                          return ValueListenableBuilder<List<T>>(
+                            valueListenable: _selectedItemsNotifier,
+                            builder: (context, selectedItems, child) {
+                              return SliverList(
+                                delegate: SliverChildListDelegate([
+                                  _selectAllWidgetWithData(snapshot.data!),
+                                  ...snapshot.data!.asMap().entries.map((entry) {
+                                    int index = entry.key;
+                                    T item = entry.value;
+                                    return Container(
+                                      color: _currentFocusedIndex == (index + 1) ? Colors.grey[300] : null,
+                                      child: widget.isMultiSelectionMode
+                                          ? _itemWidgetMultiSelection(item)
+                                          : _itemWidgetSingleSelection(item),
+                                    );
+                                  }).toList(),
+                                ]),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
               _multiSelectionValidation(),
@@ -584,6 +558,59 @@ class SelectionWidgetState<T> extends State<SelectionWidget<T>> {
     }
 
     return Container();
+  }
+
+  Widget _selectAllWidgetWithData(List<T> items) {
+    if (!widget.isMultiSelectionMode || items.isEmpty) return Container();
+
+    return ValueListenableBuilder<List<T>>(
+      valueListenable: _selectedItemsNotifier,
+      builder: (context, selectedItems, child) {
+        // Check if all items are selected
+        bool allSelected = items.isNotEmpty && items.every((item) => _isSelectedItem(item));
+
+        return Column(
+          children: [
+            CheckBoxWidget(
+              textDirection: widget.popupProps.textDirection,
+              interceptCallBacks: widget.popupProps.interceptCallBacks,
+              layout: (context, isChecked) => ListTile(
+                title: Text(
+                  'Select All',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              isChecked: allSelected,
+              isDisabled: false,
+              onChanged: (c) {
+                // Toggle between select all and deselect all
+                if (items.isNotEmpty) {
+                  List<T> newSelection;
+                  if (allSelected) {
+                    // If all are selected, deselect all
+                    newSelection = [];
+                  } else {
+                    // If not all are selected, select all
+                    newSelection = List.from(items);
+                  }
+
+                  _selectedItemsNotifier.value = newSelection;
+                }
+              },
+            ),
+            Divider(
+              height: 1,
+              thickness: 1,
+              color: Colors.grey.shade600,
+              indent: 16,
+              endIndent: 16,
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Widget _buildFavoriteItems(List<T> favoriteItems) {

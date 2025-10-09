@@ -50,6 +50,9 @@ class PopupProps<T> {
   ///favorite items props
   final FavoriteItemProps<T> favoriteItemProps;
 
+  ///any item props (for single selection mode)
+  final AnyItemProps anyItemProps;
+
   ///dialog mode props
   final DialogProps dialogProps;
 
@@ -88,6 +91,7 @@ class PopupProps<T> {
     this.scrollbarProps = const ScrollbarProps(),
     this.listViewProps = const ListViewProps(),
     this.favoriteItemProps = const FavoriteItemProps(),
+    this.anyItemProps = const AnyItemProps(),
     this.searchDelay = const Duration(seconds: 1),
     this.onDismissed,
     this.emptyBuilder,
@@ -110,6 +114,7 @@ class PopupProps<T> {
     this.scrollbarProps = const ScrollbarProps(),
     this.listViewProps = const ListViewProps(),
     this.favoriteItemProps = const FavoriteItemProps(),
+    this.anyItemProps = const AnyItemProps(),
     this.searchDelay = const Duration(seconds: 1),
     this.onDismissed,
     this.emptyBuilder,
@@ -135,6 +140,7 @@ class PopupProps<T> {
     this.scrollbarProps = const ScrollbarProps(),
     this.listViewProps = const ListViewProps(),
     this.favoriteItemProps = const FavoriteItemProps(),
+    this.anyItemProps = const AnyItemProps(),
     this.searchDelay = const Duration(seconds: 1),
     this.onDismissed,
     this.emptyBuilder,
@@ -164,6 +170,7 @@ class PopupProps<T> {
     this.scrollbarProps = const ScrollbarProps(),
     this.listViewProps = const ListViewProps(),
     this.favoriteItemProps = const FavoriteItemProps(),
+    this.anyItemProps = const AnyItemProps(),
     this.searchDelay = const Duration(seconds: 1),
     this.onDismissed,
     this.emptyBuilder,
@@ -189,6 +196,7 @@ class PopupProps<T> {
     this.scrollbarProps = const ScrollbarProps(),
     this.listViewProps = const ListViewProps(),
     this.favoriteItemProps = const FavoriteItemProps(),
+    this.anyItemProps = const AnyItemProps(),
     this.searchDelay = const Duration(seconds: 1),
     this.onDismissed,
     this.emptyBuilder,
@@ -231,6 +239,7 @@ class PopupPropsMultiSelection<T> extends PopupProps<T> {
     super.disabledItemFn,
     super.searchFieldProps = const TextFieldProps(),
     super.favoriteItemProps = const FavoriteItemProps(),
+    super.anyItemProps = const AnyItemProps(),
     super.modalBottomSheetProps = const ModalBottomSheetProps(),
     super.scrollbarProps = const ScrollbarProps(),
     super.listViewProps = const ListViewProps(),
@@ -259,6 +268,7 @@ class PopupPropsMultiSelection<T> extends PopupProps<T> {
     super.searchFieldProps = const TextFieldProps(),
     super.menuProps = const MenuProps(),
     super.favoriteItemProps = const FavoriteItemProps(),
+    super.anyItemProps = const AnyItemProps(),
     super.scrollbarProps = const ScrollbarProps(),
     super.listViewProps = const ListViewProps(),
     super.searchDelay,
@@ -287,6 +297,7 @@ class PopupPropsMultiSelection<T> extends PopupProps<T> {
     super.scrollbarProps = const ScrollbarProps(),
     super.listViewProps = const ListViewProps(),
     super.favoriteItemProps = const FavoriteItemProps(),
+    super.anyItemProps = const AnyItemProps(),
     super.dialogProps = const DialogProps(),
     super.searchDelay,
     super.onDismissed,
@@ -317,6 +328,7 @@ class PopupPropsMultiSelection<T> extends PopupProps<T> {
     super.searchFieldProps = const TextFieldProps(),
     super.listViewProps = const ListViewProps(),
     super.favoriteItemProps = const FavoriteItemProps(),
+    super.anyItemProps = const AnyItemProps(),
     super.bottomSheetProps = const BottomSheetProps(),
     super.scrollbarProps = const ScrollbarProps(),
     super.searchDelay,
@@ -346,6 +358,7 @@ class PopupPropsMultiSelection<T> extends PopupProps<T> {
     super.disabledItemFn,
     super.searchFieldProps = const TextFieldProps(),
     super.favoriteItemProps = const FavoriteItemProps(),
+    super.anyItemProps = const AnyItemProps(),
     super.modalBottomSheetProps = const ModalBottomSheetProps(),
     super.scrollbarProps = const ScrollbarProps(),
     super.listViewProps = const ListViewProps(),
@@ -370,6 +383,7 @@ class PopupPropsMultiSelection<T> extends PopupProps<T> {
           title: popupProps.title,
           fit: popupProps.fit,
           favoriteItemProps: popupProps.favoriteItemProps,
+          anyItemProps: popupProps.anyItemProps,
           disabledItemFn: popupProps.disabledItemFn,
           emptyBuilder: popupProps.emptyBuilder,
           errorBuilder: popupProps.errorBuilder,

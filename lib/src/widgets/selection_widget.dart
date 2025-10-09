@@ -183,7 +183,9 @@ class SelectionWidgetState<T> extends State<SelectionWidget<T>> {
                             builder: (context, selectedItems, child) {
                               return SliverList(
                                 delegate: SliverChildListDelegate([
-                                  _selectAllWidgetWithData(snapshot.data!),
+                                  widget.isMultiSelectionMode
+                                      ? _selectAllWidgetWithData(snapshot.data!)
+                                      : _selectAnyWidgetWithData(snapshot.data!),
                                   ...snapshot.data!.asMap().entries.map((entry) {
                                     int index = entry.key;
                                     T item = entry.value;
@@ -599,6 +601,52 @@ class SelectionWidgetState<T> extends State<SelectionWidget<T>> {
                   _selectedItemsNotifier.value = newSelection;
                 }
               },
+            ),
+            Divider(
+              height: 1,
+              thickness: 1,
+              color: Colors.grey.shade600,
+              indent: 16,
+              endIndent: 16,
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _selectAnyWidgetWithData(List<T> items) {
+    if (widget.isMultiSelectionMode || !widget.popupProps.anyItemProps.showAnyItem || items.isEmpty) {
+      return Container();
+    }
+
+    return ValueListenableBuilder<List<T>>(
+      valueListenable: _selectedItemsNotifier,
+      builder: (context, selectedItems, child) {
+        // Check if nothing is selected (Any is active)
+        bool nothingSelected = selectedItems.isEmpty;
+
+        Widget anyItemWidget = widget.popupProps.anyItemProps.anyItemBuilder != null
+            ? widget.popupProps.anyItemProps.anyItemBuilder!(context)
+            : ListTile(
+                title: Text(
+                  widget.popupProps.anyItemProps.anyItemLabel,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                selected: nothingSelected,
+              );
+
+        return Column(
+          children: [
+            InkWell(
+              onTap: () {
+                // Clear selection to select "Any"
+                closePopup();
+                if (widget.onChanged != null) widget.onChanged!([]);
+              },
+              child: anyItemWidget,
             ),
             Divider(
               height: 1,

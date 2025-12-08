@@ -331,7 +331,9 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindin
     List<T> newSelectedItems = isMultiSelectionMode ? widget.selectedItems : _itemToList(widget.selectedItem);
 
     if (widget.selectedItem != oldWidget.selectedItem) {
-      _textEditingController.text = _selectedItemAsString(widget.selectedItem);
+      if (!(widget.isInlineSearchBar && _isDialogPresented && _textFieldFocusNode.hasFocus)) {
+        _textEditingController.text = _selectedItemAsString(widget.selectedItem);
+      }
     }
 
     if (!listEquals(oldSelectedItems, newSelectedItems)) {
@@ -463,6 +465,8 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindin
                   _selectSearchMode();
                 },
                 onChanged: (s) {
+                  final hadFocus = _textFieldFocusNode.hasFocus;
+
                   if (s == '') {
                     if (widget.clearButtonProps.onPressed != null) {
                       widget.clearButtonProps.onPressed!();
@@ -472,6 +476,14 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindin
                   }
 
                   _selectSearchMode();
+
+                  if (hadFocus && widget.isInlineSearchBar) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted && _textFieldFocusNode.canRequestFocus) {
+                        _textFieldFocusNode.requestFocus();
+                      }
+                    });
+                  }
                 },
               );
             }
@@ -764,7 +776,6 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindin
     final popupButtonObject = textFieldBox ?? (context.findRenderObject() as RenderBox);
 
     if (widget.isInlineSearchBar) {
-
       if (!isMultiSelectionMode && widget.popupProps.anyItemProps.showAnyItem) {
         _textEditingController.clear();
       }
@@ -886,14 +897,21 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindin
       changeItem();
     }
 
-    FocusScope.of(context).requestFocus(FocusNode());
-    _textEditingController.text = _selectedItemAsString(getSelectedItem);
-    _textEditingController.selection = TextSelection(
-      baseOffset: 0,
-      extentOffset: _textEditingController.text.length,
-    );
-
-    _handleFocus(false);
+    if (!widget.isInlineSearchBar) {
+      FocusScope.of(context).requestFocus(FocusNode());
+      _textEditingController.text = _selectedItemAsString(getSelectedItem);
+      _textEditingController.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: _textEditingController.text.length,
+      );
+      _handleFocus(false);
+    } else if (_isDialogPresented) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _textFieldFocusNode.canRequestFocus) {
+          _textFieldFocusNode.requestFocus();
+        }
+      });
+    }
   }
 
   ///compared two items base on user params

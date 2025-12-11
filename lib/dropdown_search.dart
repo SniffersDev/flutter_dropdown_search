@@ -263,6 +263,10 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindin
   late final TextEditingController _textEditingController;
   var _isDialogPresented = false;
 
+  bool _shouldSelectAllOnTap = false;
+
+  List<T>? _asyncItemsCache;
+
   final StreamController<KeyboardState> keyboardStateController = StreamController<KeyboardState>.broadcast();
 
   final ValueNotifier<RelativeRect> _overlayPositionNotifier = ValueNotifier(RelativeRect.fill);
@@ -462,10 +466,24 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindin
                 decoration: _manageDropdownDecoration(state),
                 readOnly: false,
                 onTap: () {
+                  if (_textEditingController.text.isNotEmpty) {
+                    _shouldSelectAllOnTap = true;
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted && _shouldSelectAllOnTap) {
+                        _textEditingController.selection = TextSelection(
+                          baseOffset: 0,
+                          extentOffset: _textEditingController.text.length,
+                        );
+                        _shouldSelectAllOnTap = false;
+                      }
+                    });
+                  }
                   _selectSearchMode();
                 },
                 onChanged: (s) {
                   final hadFocus = _textFieldFocusNode.hasFocus;
+
+                  _shouldSelectAllOnTap = false;
 
                   if (s == '') {
                     if (widget.clearButtonProps.onPressed != null) {
@@ -551,7 +569,24 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindin
                     controller: _textEditingController,
                     decoration: _manageDropdownDecoration(state),
                     readOnly: false,
-                    onTap: _selectSearchMode,
+                    onTap: () {
+                      if (_textEditingController.text.isNotEmpty) {
+                        _shouldSelectAllOnTap = true;
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (mounted && _shouldSelectAllOnTap) {
+                            _textEditingController.selection = TextSelection(
+                              baseOffset: 0,
+                              extentOffset: _textEditingController.text.length,
+                            );
+                            _shouldSelectAllOnTap = false;
+                          }
+                        });
+                      }
+                      _selectSearchMode();
+                    },
+                    onChanged: (s) {
+                      _shouldSelectAllOnTap = false;
+                    },
                   );
                 }
 
@@ -611,25 +646,41 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindin
       child: ValueListenableBuilder<TextEditingValue>(
         valueListenable: _textEditingController,
         builder: (context, textValue, child) {
+          final showClearButton = widget.clearButtonProps.isVisible &&
+              (_textEditingController.text.isNotEmpty || getSelectedItems.isNotEmpty) &&
+              (widget.isInlineSearchBar || !_isDialogPresented);
+
           return Row(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.end,
             children: <Widget>[
-              if (widget.clearButtonProps.isVisible &&
-                  !_isDialogPresented &&
-                  (_textEditingController.text.isNotEmpty || getSelectedItems.isNotEmpty))
+              if (showClearButton)
                 IconButton(
                   style: widget.clearButtonProps.style,
                   isSelected: widget.clearButtonProps.isSelected,
                   selectedIcon: widget.clearButtonProps.selectedIcon,
                   onPressed: () {
+                    if (widget.isInlineSearchBar) {
+                      _textEditingController.clear();
+                    }
+
                     if (widget.clearButtonProps.onPressed != null) {
                       widget.clearButtonProps.onPressed!();
                     } else {
                       clearButtonPressed();
                     }
 
-                    _selectSearchMode();
+                    if (!_isDialogPresented) {
+                      _selectSearchMode();
+                    }
+
+                    if (widget.isInlineSearchBar) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted && _textFieldFocusNode.canRequestFocus) {
+                          _textFieldFocusNode.requestFocus();
+                        }
+                      });
+                    }
                   },
                   icon: widget.clearButtonProps.icon,
                   constraints: widget.clearButtonProps.constraints,
@@ -650,7 +701,7 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindin
                   tooltip: widget.clearButtonProps.tooltip,
                   visualDensity: widget.clearButtonProps.visualDensity,
                 ),
-              if (_isDialogPresented)
+              if (_isDialogPresented && !widget.isInlineSearchBar)
                 IconButton(
                   onPressed: () {},
                   icon: Icon(Icons.keyboard_arrow_up),
@@ -820,41 +871,47 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindin
       compareFn: widget.compareFn,
       isMultiSelectionMode: isMultiSelectionMode,
       defaultSelectedItems: List.from(getSelectedItems),
-      clearButton: Align(
-        alignment: Alignment.centerRight,
-        child: IconButton(
-          style: widget.clearButtonProps.style,
-          isSelected: widget.clearButtonProps.isSelected,
-          selectedIcon: widget.clearButtonProps.selectedIcon,
-          onPressed: () {
-            if (widget.clearButtonProps.onPressed != null) {
-              widget.clearButtonProps.onPressed!();
-            } else {
-              clear();
-            }
+      asyncItemsCache: _asyncItemsCache,
+      onAsyncItemsCached: (items) {
+        _asyncItemsCache = items;
+      },
+      clearButton: widget.isInlineSearchBar
+          ? const SizedBox.shrink()
+          : Align(
+              alignment: Alignment.centerRight,
+              child: IconButton(
+                style: widget.clearButtonProps.style,
+                isSelected: widget.clearButtonProps.isSelected,
+                selectedIcon: widget.clearButtonProps.selectedIcon,
+                onPressed: () {
+                  if (widget.clearButtonProps.onPressed != null) {
+                    widget.clearButtonProps.onPressed!();
+                  } else {
+                    clear();
+                  }
 
-            _selectSearchMode();
-          },
-          icon: widget.clearButtonProps.icon,
-          constraints: widget.clearButtonProps.constraints,
-          hoverColor: widget.clearButtonProps.hoverColor,
-          highlightColor: widget.clearButtonProps.highlightColor,
-          splashColor: widget.clearButtonProps.splashColor,
-          color: widget.clearButtonProps.color,
-          focusColor: widget.clearButtonProps.focusColor,
-          iconSize: widget.clearButtonProps.iconSize,
-          padding: widget.clearButtonProps.padding,
-          splashRadius: widget.clearButtonProps.splashRadius,
-          alignment: widget.clearButtonProps.alignment,
-          autofocus: widget.clearButtonProps.autofocus,
-          disabledColor: widget.clearButtonProps.disabledColor,
-          enableFeedback: widget.clearButtonProps.enableFeedback,
-          focusNode: widget.clearButtonProps.focusNode,
-          mouseCursor: widget.clearButtonProps.mouseCursor,
-          tooltip: widget.clearButtonProps.tooltip,
-          visualDensity: widget.clearButtonProps.visualDensity,
-        ),
-      ),
+                  _selectSearchMode();
+                },
+                icon: widget.clearButtonProps.icon,
+                constraints: widget.clearButtonProps.constraints,
+                hoverColor: widget.clearButtonProps.hoverColor,
+                highlightColor: widget.clearButtonProps.highlightColor,
+                splashColor: widget.clearButtonProps.splashColor,
+                color: widget.clearButtonProps.color,
+                focusColor: widget.clearButtonProps.focusColor,
+                iconSize: widget.clearButtonProps.iconSize,
+                padding: widget.clearButtonProps.padding,
+                splashRadius: widget.clearButtonProps.splashRadius,
+                alignment: widget.clearButtonProps.alignment,
+                autofocus: widget.clearButtonProps.autofocus,
+                disabledColor: widget.clearButtonProps.disabledColor,
+                enableFeedback: widget.clearButtonProps.enableFeedback,
+                focusNode: widget.clearButtonProps.focusNode,
+                mouseCursor: widget.clearButtonProps.mouseCursor,
+                tooltip: widget.clearButtonProps.tooltip,
+                visualDensity: widget.clearButtonProps.visualDensity,
+              ),
+            ),
     );
   }
 
@@ -1046,6 +1103,11 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindin
   List<T> get popupGetSelectedItems => _popupStateKey.currentState?.getSelectedItem ?? [];
 
   void updatePopupState() => _popupStateKey.currentState?.setState(() {});
+
+  ///Clears the cached async items
+  void invalidateAsyncItemsCache() {
+    _asyncItemsCache = null;
+  }
 }
 
 class _MultiSelectionBoxWidget extends StatelessWidget {

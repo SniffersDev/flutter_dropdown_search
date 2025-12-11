@@ -21,6 +21,10 @@ class SelectionWidget<T> extends StatefulWidget {
   final bool isSearchMode;
   final Widget clearButton;
 
+  final List<T>? asyncItemsCache;
+
+  final ValueChanged<List<T>>? onAsyncItemsCached;
+
   const SelectionWidget({
     Key? key,
     required this.popupProps,
@@ -36,6 +40,8 @@ class SelectionWidget<T> extends StatefulWidget {
     this.itemAsString,
     this.filterFn,
     this.compareFn,
+    this.asyncItemsCache,
+    this.onAsyncItemsCached,
   }) : super(key: key);
 
   @override
@@ -401,6 +407,28 @@ class SelectionWidgetState<T> extends State<SelectionWidget<T>> {
     //load offline data for the first time
     if (isFirstLoad) _cachedItems.addAll(widget.items);
 
+    final bool useCachedAsyncItems =
+        widget.popupProps.cacheAsyncItems && widget.asyncItemsCache != null && widget.asyncItemsCache!.isNotEmpty;
+
+    if (useCachedAsyncItems && !isFirstLoad) {
+      // Use cached async items with local filtering
+      if (_cachedItems.isEmpty) {
+        _cachedItems.addAll(widget.items);
+        _cachedItems.addAll(widget.asyncItemsCache!);
+      }
+      addDataToStream(applyFilter(filter));
+      _loadingNotifier.value = false;
+      return;
+    }
+
+    // Initialize cache from stored async items on first load if available
+    if (isFirstLoad && useCachedAsyncItems) {
+      _cachedItems.addAll(widget.asyncItemsCache!);
+      addDataToStream(applyFilter(filter));
+      _loadingNotifier.value = false;
+      return;
+    }
+
     //manage offline items
     if (widget.asyncItems != null && (widget.popupProps.isFilterOnline || isFirstLoad)) {
       try {
@@ -420,6 +448,11 @@ class SelectionWidgetState<T> extends State<SelectionWidget<T>> {
 
         //add new online items to list
         _cachedItems.addAll(onlineItems);
+
+        // Cache the items if caching is enabled
+        if (widget.popupProps.cacheAsyncItems && widget.onAsyncItemsCached != null) {
+          widget.onAsyncItemsCached!(onlineItems);
+        }
 
         //don't filter data , they are already filtered online and local data are already filtered
         if (widget.popupProps.isFilterOnline == true)

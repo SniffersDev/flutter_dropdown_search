@@ -262,6 +262,9 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindin
   final FocusNode _textFieldFocusNode = FocusNode();
   late final TextEditingController _textEditingController;
   var _isDialogPresented = false;
+  OverlayEntry? _suffixOverlayEntry;
+  final GlobalKey _suffixIconsKey = GlobalKey();
+  final ValueNotifier<bool> _suffixOverlayVisible = ValueNotifier(false);
 
   bool _shouldSelectAllOnTap = false;
 
@@ -290,6 +293,7 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindin
 
   @override
   void dispose() {
+    _removeSuffixOverlay();
     _textFieldFocusNode.dispose();
     _overlayPositionNotifier.dispose();
     WidgetsBinding.instance.removeObserver(this);
@@ -485,7 +489,7 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindin
 
                   _shouldSelectAllOnTap = false;
 
-                  if (s == '') {
+                  if (s == '' && !_isDialogPresented) {
                     if (widget.clearButtonProps.onPressed != null) {
                       widget.clearButtonProps.onPressed!();
                     } else {
@@ -642,15 +646,21 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindin
     final clearButtonPressed = () => clear();
     final dropdownButtonPressed = () => _selectSearchMode();
 
-    return ExcludeFocus(
-      child: ValueListenableBuilder<TextEditingValue>(
-        valueListenable: _textEditingController,
-        builder: (context, textValue, child) {
-          final showClearButton = widget.clearButtonProps.isVisible &&
-              (_textEditingController.text.isNotEmpty || getSelectedItems.isNotEmpty) &&
-              (widget.isInlineSearchBar || !_isDialogPresented);
+    return ValueListenableBuilder<bool>(
+      valueListenable: _suffixOverlayVisible,
+      builder: (context, overlayVisible, _) {
+        return Opacity(
+          opacity: overlayVisible ? 0.0 : 1.0,
+          child: ExcludeFocus(
+            child: ValueListenableBuilder<TextEditingValue>(
+              valueListenable: _textEditingController,
+              builder: (context, textValue, child) {
+                final showClearButton = widget.clearButtonProps.isVisible &&
+                    (_textEditingController.text.isNotEmpty || getSelectedItems.isNotEmpty) &&
+                    (widget.isInlineSearchBar || !_isDialogPresented);
 
-          return Row(
+                return Row(
+            key: _suffixIconsKey,
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.end,
             children: <Widget>[
@@ -732,10 +742,79 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindin
                   visualDensity: widget.dropdownButtonProps.visualDensity,
                 ),
             ],
-          );
-        },
+              );
+            },
+          ),
+        ),
+      );
+    },
+    );
+  }
+
+  void _showSuffixOverlay() {
+    if (!widget.isInlineSearchBar) return;
+    _removeSuffixOverlay();
+
+    final renderBox = _suffixIconsKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox == null) return;
+
+    final overlay = Overlay.of(context);
+    final overlayBox = overlay.context.findRenderObject() as RenderBox?;
+    if (overlayBox == null) return;
+
+    final position = renderBox.localToGlobal(Offset.zero, ancestor: overlayBox);
+    final size = renderBox.size;
+    final rightEdge = position.dx + size.width;
+
+    _suffixOverlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        right: overlayBox.size.width - rightEdge,
+        top: position.dy,
+        height: size.height,
+        child: Material(
+          color: Colors.transparent,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              if (_textEditingController.text.isNotEmpty || getSelectedItems.isNotEmpty)
+                IconButton(
+                  onPressed: () {
+                    _textEditingController.clear();
+                    clear();
+                    _removeSuffixOverlay();
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted && _textFieldFocusNode.canRequestFocus) {
+                        _textFieldFocusNode.requestFocus();
+                      }
+                    });
+                  },
+                  icon: const Icon(Icons.clear, size: 16),
+                  padding: const EdgeInsets.all(8.0),
+                  constraints: const BoxConstraints(),
+                ),
+              IconButton(
+                onPressed: () {
+                  _popupStateKey.currentState?.closePopup();
+                },
+                icon: Icon(Icons.arrow_drop_up, size: 24),
+                padding: const EdgeInsets.all(8.0),
+                constraints: const BoxConstraints(),
+              ),
+            ],
+          ),
+        ),
       ),
     );
+
+    overlay.insert(_suffixOverlayEntry!);
+    _suffixOverlayVisible.value = true;
+  }
+
+  void _removeSuffixOverlay() {
+    _suffixOverlayEntry?.remove();
+    _suffixOverlayEntry = null;
+    _suffixOverlayVisible.value = false;
   }
 
   /// Handles focus changes for the search text field, allowing actions to be triggered
@@ -831,13 +910,19 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindin
         _textEditingController.clear();
       }
 
-      // After opening the menu, the focus changes. We need to refocus on our text field.
-      Future.delayed(
-        Duration(milliseconds: 200),
-        () {
-          FocusScope.of(context).requestFocus(_textFieldFocusNode);
-        },
-      );
+      // Re-establish focus and text selection after the PopupRoute takes over
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _textFieldFocusNode.canRequestFocus) {
+          _textFieldFocusNode.requestFocus();
+          if (_textEditingController.text.isNotEmpty) {
+            _textEditingController.selection = TextSelection(
+              baseOffset: 0,
+              extentOffset: _textEditingController.text.length,
+            );
+          }
+        }
+        _showSuffixOverlay();
+      });
     }
     _updateOverlayPosition();
 
@@ -848,6 +933,8 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindin
       targetSize: popupButtonObject.size,
       child: _popupWidgetInstance(),
     );
+
+    _removeSuffixOverlay();
 
     _textEditingController.text = widget.isMultiSelectionMode ? '' : _selectedItemAsString(getSelectedItem);
 
@@ -920,7 +1007,9 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindin
   ///same thing for clear focus,
   void _handleFocus(bool isFocused) {
     if (isFocused && !_isFocused.value) {
-      FocusScope.of(context).unfocus();
+      if (!widget.isInlineSearchBar) {
+        FocusScope.of(context).unfocus();
+      }
       _isFocused.value = true;
     } else if (!isFocused && _isFocused.value) _isFocused.value = false;
   }
@@ -962,12 +1051,6 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindin
         extentOffset: _textEditingController.text.length,
       );
       _handleFocus(false);
-    } else if (_isDialogPresented) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && _textFieldFocusNode.canRequestFocus) {
-          _textFieldFocusNode.requestFocus();
-        }
-      });
     }
   }
 

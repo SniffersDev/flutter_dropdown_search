@@ -649,7 +649,7 @@ class SelectionWidgetState<T> extends State<SelectionWidget<T>> {
   }
 
   Widget _selectAnyWidgetWithData(List<T> items) {
-    if (widget.isMultiSelectionMode || !widget.popupProps.anyItemProps.showAnyItem || items.isEmpty) {
+    if (widget.isMultiSelectionMode || !widget.popupProps.anyItemProps.showAnyItem) {
       return Container();
     }
 

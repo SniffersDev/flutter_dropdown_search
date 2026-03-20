@@ -312,6 +312,7 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> with WidgetsBindin
   }
 
   void _updateOverlayPosition() {
+    if (!mounted) return;
     final popupButtonObject = context.findRenderObject() as RenderBox?;
     final overlay = Overlay.of(context).context.findRenderObject() as RenderBox?;
 

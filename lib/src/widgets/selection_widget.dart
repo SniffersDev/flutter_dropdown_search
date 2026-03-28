@@ -167,12 +167,13 @@ class SelectionWidgetState<T> extends State<SelectionWidget<T>> {
                     restorationId: widget.popupProps.listViewProps.restorationId,
                     clipBehavior: widget.popupProps.listViewProps.clipBehavior,
                     slivers: [
-                      SliverPersistentHeader(
-                        pinned: true,
-                        delegate: _ClearButtonDelegate(
-                          child: widget.clearButton,
+                      if (!widget.isSearchMode)
+                        SliverPersistentHeader(
+                          pinned: true,
+                          delegate: _ClearButtonDelegate(
+                            child: widget.clearButton,
+                          ),
                         ),
-                      ),
                       StreamBuilder<List<T>>(
                         stream: _itemsStream.stream,
                         builder: (context, snapshot) {
